@@ -4,6 +4,9 @@ import tailwindcss from '@tailwindcss/vite'
 
 
 export default defineConfig({
+  // GitHub Pages serves this from /personal-trainer/, not the domain root, so
+  // asset URLs need the repo name prefixed. Local dev stays at '/'.
+  base: process.env.GITHUB_PAGES ? '/personal-trainer/' : '/',
   plugins: [react(), tailwindcss()],
   resolve: { alias: { '@': new URL('./src', import.meta.url).pathname } },
   test: {

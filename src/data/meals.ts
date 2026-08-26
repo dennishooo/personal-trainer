@@ -15,6 +15,8 @@ export interface Recipe {
   id: string
   name: string
   chinese?: string
+  /** Tabler icon name shown on the recipe card. */
+  icon: string
   slot: Slot
   cuisine: Cuisine
   prepMin: number
@@ -39,6 +41,7 @@ export const REFERENCE_KG = 78.8
 const BREAKFAST: Recipe[] = [
   {
     id: 'b-savoury-oats',
+    icon: 'soup',
     name: 'Savoury century-egg oats',
     chinese: '鹹味燕麥粥',
     slot: 'breakfast',
@@ -69,6 +72,7 @@ const BREAKFAST: Recipe[] = [
   },
   {
     id: 'b-tamagoyaki-bowl',
+    icon: 'bowl-chopsticks',
     name: 'Natto & egg rice bowl',
     chinese: '納豆雞蛋飯',
     slot: 'breakfast',
@@ -97,6 +101,7 @@ const BREAKFAST: Recipe[] = [
   },
   {
     id: 'b-tofu-scramble',
+    icon: 'egg-fried',
     name: 'Silken tofu & prawn scramble',
     chinese: '滑蛋蝦仁豆腐',
     slot: 'breakfast',
@@ -126,6 +131,7 @@ const BREAKFAST: Recipe[] = [
   },
   {
     id: 'b-korean-eggs',
+    icon: 'egg',
     name: 'Gyeran-jjim with tuna',
     chinese: '韓式蒸蛋',
     slot: 'breakfast',
@@ -154,6 +160,7 @@ const BREAKFAST: Recipe[] = [
   },
   {
     id: 'b-overnight-oats',
+    icon: 'milk',
     name: 'Black sesame overnight oats',
     chinese: '芝麻隔夜燕麥',
     slot: 'breakfast',
@@ -183,6 +190,7 @@ const BREAKFAST: Recipe[] = [
   },
   {
     id: 'b-chicken-congee',
+    icon: 'soup',
     name: 'Quick chicken & ginger congee',
     chinese: '雞絲薑粥',
     slot: 'breakfast',
@@ -211,6 +219,7 @@ const BREAKFAST: Recipe[] = [
   },
   {
     id: 'b-protein-jian-bing',
+    icon: 'bread',
     name: 'Protein jianbing wrap',
     chinese: '高蛋白煎餅',
     slot: 'breakfast',
@@ -246,6 +255,7 @@ const BREAKFAST: Recipe[] = [
 const DINNER: Recipe[] = [
   {
     id: 'd-steamed-fish',
+    icon: 'fish',
     name: 'Cantonese steamed fish',
     chinese: '清蒸魚',
     slot: 'dinner',
@@ -278,6 +288,7 @@ const DINNER: Recipe[] = [
   },
   {
     id: 'd-bibimbap',
+    icon: 'bowl-spoon',
     name: 'Weeknight beef bibimbap',
     chinese: '韓式拌飯',
     slot: 'dinner',
@@ -311,6 +322,7 @@ const DINNER: Recipe[] = [
   },
   {
     id: 'd-oyakodon',
+    icon: 'bowl-chopsticks',
     name: 'Oyakodon',
     chinese: '親子丼',
     slot: 'dinner',
@@ -342,6 +354,7 @@ const DINNER: Recipe[] = [
   },
   {
     id: 'd-larb',
+    icon: 'salad',
     name: 'Chicken larb with herbs',
     chinese: '泰式雞肉沙律',
     slot: 'dinner',
@@ -373,6 +386,7 @@ const DINNER: Recipe[] = [
   },
   {
     id: 'd-tofu-jjigae',
+    icon: 'soup',
     name: 'Soft tofu stew',
     chinese: '嫩豆腐鍋',
     slot: 'dinner',
@@ -404,6 +418,7 @@ const DINNER: Recipe[] = [
   },
   {
     id: 'd-salmon-teriyaki',
+    icon: 'fish',
     name: 'Pan-seared salmon with sesame greens',
     chinese: '照燒三文魚',
     slot: 'dinner',
@@ -435,6 +450,7 @@ const DINNER: Recipe[] = [
   },
   {
     id: 'd-white-cut-chicken',
+    icon: 'meat',
     name: 'White-cut chicken with ginger-scallion oil',
     chinese: '白切雞配薑蔥油',
     slot: 'dinner',
@@ -466,6 +482,7 @@ const DINNER: Recipe[] = [
   },
   {
     id: 'd-pho-ga',
+    icon: 'bowl-chopsticks',
     name: 'Fast pho ga',
     chinese: '越式雞湯河',
     slot: 'dinner',
@@ -498,6 +515,7 @@ const DINNER: Recipe[] = [
   },
   {
     id: 'd-mapo-tofu',
+    icon: 'pepper',
     name: 'Leaner mapo tofu',
     chinese: '麻婆豆腐',
     slot: 'dinner',
@@ -529,6 +547,7 @@ const DINNER: Recipe[] = [
   },
   {
     id: 'd-beef-stirfry',
+    icon: 'meat',
     name: 'Beef & broccoli stir-fry',
     chinese: '西蘭花炒牛肉',
     slot: 'dinner',
@@ -564,6 +583,7 @@ const DINNER: Recipe[] = [
 const LUNCH_OUT: Recipe[] = [
   {
     id: 'l-cha-chaan-teng',
+    icon: 'bowl-chopsticks',
     name: 'Cha chaan teng',
     chinese: '茶餐廳',
     slot: 'lunch-out',
@@ -590,6 +610,7 @@ const LUNCH_OUT: Recipe[] = [
   },
   {
     id: 'l-japanese-set',
+    icon: 'fish',
     name: 'Japanese set lunch',
     chinese: '日式定食',
     slot: 'lunch-out',
@@ -615,6 +636,7 @@ const LUNCH_OUT: Recipe[] = [
   },
   {
     id: 'l-vietnamese',
+    icon: 'bowl-spoon',
     name: 'Vietnamese',
     chinese: '越南菜',
     slot: 'lunch-out',
@@ -639,6 +661,7 @@ const LUNCH_OUT: Recipe[] = [
   },
   {
     id: 'l-korean',
+    icon: 'bowl-spoon',
     name: 'Korean',
     chinese: '韓國菜',
     slot: 'lunch-out',
@@ -662,6 +685,7 @@ const LUNCH_OUT: Recipe[] = [
   },
   {
     id: 'l-salad-poke',
+    icon: 'salad',
     name: 'Poke / salad bar',
     slot: 'lunch-out',
     cuisine: 'western',
@@ -685,6 +709,7 @@ const LUNCH_OUT: Recipe[] = [
   },
   {
     id: 'l-thai',
+    icon: 'pepper',
     name: 'Thai',
     chinese: '泰國菜',
     slot: 'lunch-out',
@@ -712,6 +737,7 @@ const LUNCH_OUT: Recipe[] = [
 const SNACKS: Recipe[] = [
   {
     id: 's-bubble-tea',
+    icon: 'bubble-tea',
     name: 'Bubble tea, rebuilt',
     chinese: '珍珠奶茶',
     slot: 'snack',
@@ -739,6 +765,7 @@ const SNACKS: Recipe[] = [
   },
   {
     id: 's-soy-milk',
+    icon: 'milk',
     name: 'Iced soy milk with protein',
     chinese: '豆漿',
     slot: 'snack',
@@ -759,6 +786,7 @@ const SNACKS: Recipe[] = [
   },
   {
     id: 's-edamame',
+    icon: 'salad',
     name: 'Edamame with sea salt',
     chinese: '毛豆',
     slot: 'snack',
@@ -779,6 +807,7 @@ const SNACKS: Recipe[] = [
   },
   {
     id: 's-greek-yoghurt',
+    icon: 'cup',
     name: 'Greek yoghurt with black sesame',
     slot: 'snack',
     cuisine: 'western',

@@ -62,6 +62,20 @@ npm run type-check
 npm run build
 ```
 
+## Illustrations
+
+Icons are [Tabler Icons](https://tabler.io/icons) (MIT), bundled locally under
+`src/assets/icons/` so the app has no external asset dependency — see the LICENSE
+file there.
+
+Tabler has no icons for specific barbell lifts, so the movement-pattern figures in
+`ExerciseDiagram.tsx` are drawn by hand to the same spec — 24x24 grid, 2px stroke,
+round caps and joins — which is what keeps the two sets looking like one family.
+
+Exercise photography was deliberately avoided: the freely available sets are either
+copyrighted (Gym Visual's media, redistributed under permission that does not extend
+to us) or carry per-item licences too inconsistent to audit.
+
 ## A note on the content
 
 Targets are estimates from population-level equations. Individual metabolism varies by

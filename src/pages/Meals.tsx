@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Clock, Star, ChefHat, Search, Utensils } from 'lucide-react'
+import { Icon, type IconName } from '@/components/icons'
 import { usePlan } from '@/stores/profile'
 import {
   RECIPES, CUISINE_LABELS, SLOT_LABELS, scaleAmount, scaleMacros,
@@ -165,7 +166,11 @@ function RecipeCard({
     <Card className={cn('overflow-hidden transition-shadow', expanded && 'ring-1 ring-primary/30')}>
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
+          <div className="flex min-w-0 gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+              <Icon name={recipe.icon as IconName} size={22} />
+            </span>
+            <div className="min-w-0">
             <CardTitle className="flex flex-wrap items-center gap-2">
               {recipe.name}
               {recipe.chinese && <span className="text-sm font-normal text-muted-foreground">{recipe.chinese}</span>}
@@ -178,6 +183,7 @@ function RecipeCard({
                 </span>
               )}
               {recipe.batch && <Badge tone="primary">batch</Badge>}
+            </div>
             </div>
           </div>
           <button

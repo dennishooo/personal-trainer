@@ -1,19 +1,28 @@
+import type { Goal } from '@/lib/nutrition'
+
 export type MuscleGroup = 'chest' | 'back' | 'legs' | 'shoulders' | 'arms' | 'core' | 'full'
+export type Equipment = 'dumbbell' | 'bench' | 'band' | 'bodyweight' | 'pullup-bar'
 
 export interface Exercise {
   id: string
   name: string
   chinese?: string
   group: MuscleGroup
+  equipment: Equipment[]
   sets: number
   reps: string
   restSec: number
-  /** Starting load as a multiple of bodyweight. Scales the plan to the user. */
+  /**
+   * Starting load per dumbbell, as a multiple of bodyweight. Resolved against
+   * the user's actual weight and clamped to what their dumbbells can reach.
+   */
   loadPerBw?: number
   loadNote?: string
   cue: string
   form: string[]
   swap?: string
+  /** Shown when this exercise is a workaround for equipment the user lacks. */
+  upgrade?: string
 }
 
 export interface TrainingDay {
@@ -27,11 +36,24 @@ export interface TrainingDay {
   cardio?: { what: string; detail: string; minutes: number }
 }
 
+/** Per-dumbbell ceiling. The NÜOBELL 232 tops out at 32 kg in 2 kg steps. */
+export const DUMBBELL_MAX_KG = 32
+export const DUMBBELL_STEP_KG = 2
+
 /**
- * A 4-day upper/lower split with jogging on the off days. Upper/lower hits each
- * muscle twice a week, which outperforms a once-weekly "bro split" for someone
- * rebuilding after a long layoff — frequency drives the adaptation more than
- * per-session volume does.
+ * A 4-day upper/lower split built entirely around adjustable dumbbells, an
+ * adjustable bench and resistance bands. Upper/lower hits each muscle twice a
+ * week, which beats a once-weekly split for someone rebuilding after a layoff —
+ * frequency drives adaptation more than per-session volume.
+ *
+ * Two constraints shape the exercise selection:
+ *
+ * 1. No barbell means no heavy bilateral loading. The fix is unilateral work
+ *    (split squats, single-leg RDLs) — one leg at a time doubles the effective
+ *    load without needing heavier dumbbells.
+ * 2. No pull-up bar means no vertical pulling, which is the one genuine hole in
+ *    a dumbbell-only setup. Band pulldowns and pullovers partially cover it;
+ *    exercises carrying an `upgrade` note say what a bar would improve.
  */
 export const PROGRAM: TrainingDay[] = [
   {
@@ -40,85 +62,125 @@ export const PROGRAM: TrainingDay[] = [
     name: 'Lower A',
     focus: 'Squat pattern, quads and glutes',
     type: 'lift',
-    durationMin: 55,
+    durationMin: 50,
     exercises: [
       {
         id: 'goblet-squat',
         name: 'Goblet squat',
         chinese: '高腳杯深蹲',
         group: 'legs',
-        sets: 3,
-        reps: '8–12',
-        restSec: 120,
-        loadPerBw: 0.25,
+        equipment: ['dumbbell'],
+        sets: 4,
+        reps: '10–15',
+        restSec: 105,
+        loadPerBw: 0.3,
+        loadNote: 'one dumbbell, held at the chest',
         cue: 'Chest tall, elbows inside the knees at the bottom.',
         form: [
-          'Hold a dumbbell vertically against your chest, elbows tucked down.',
+          'Hold one dumbbell vertically against your chest, cupping the top head, elbows tucked down.',
           'Push your hips back and down, letting the knees travel forward over the toes.',
           'Descend until your thighs are at least parallel — deeper is fine if your back stays neutral.',
-          'Drive up through mid-foot. The knees and chest should rise together, not the hips first.',
+          'Drive up through mid-foot. Knees and chest rise together, not the hips first.',
         ],
-        swap: 'Leg press if your gym is busy.',
+        swap: 'Two dumbbells at the shoulders once one gets too light.',
       },
       {
-        id: 'rdl',
-        name: 'Romanian deadlift',
-        chinese: '羅馬尼亞硬舉',
+        id: 'bulgarian-split',
+        name: 'Bulgarian split squat',
+        chinese: '保加利亞分腿蹲',
         group: 'legs',
+        equipment: ['dumbbell', 'bench'],
         sets: 3,
-        reps: '8–10',
-        restSec: 120,
-        loadPerBw: 0.5,
-        cue: 'Hips back, bar close, feel the stretch behind the thigh.',
+        reps: '10–12 per leg',
+        restSec: 105,
+        loadPerBw: 0.18,
+        loadNote: 'per dumbbell',
+        cue: 'Most of the weight on the front leg — the back leg is a kickstand.',
         form: [
-          'Stand with the bar or dumbbells at your thighs, knees softly bent.',
-          'Push your hips back — do not squat. The bar slides down your legs, staying in contact.',
+          'Rear foot on the bench, front foot about two feet ahead.',
+          'Drop straight down until the back knee nears the floor.',
+          'Drive up through the front heel, keeping the torso upright.',
+          'Finish all reps on one leg before switching.',
+        ],
+        upgrade: 'This is the main squat driver without a barbell — one leg at a time means your 32 kg dumbbells load the working leg as hard as far heavier bilateral work would.',
+      },
+      {
+        id: 'db-rdl',
+        name: 'Dumbbell Romanian deadlift',
+        chinese: '啞鈴羅馬尼亞硬舉',
+        group: 'legs',
+        equipment: ['dumbbell'],
+        sets: 3,
+        reps: '10–12',
+        restSec: 105,
+        loadPerBw: 0.35,
+        loadNote: 'per dumbbell',
+        cue: 'Hips back, dumbbells close, feel the stretch behind the thigh.',
+        form: [
+          'Hold a dumbbell in each hand in front of your thighs, knees softly bent.',
+          'Push your hips back — do not squat. The dumbbells slide down your legs, staying in contact.',
           'Stop when you feel a strong hamstring stretch, usually around mid-shin.',
           'Drive your hips forward to stand. Squeeze the glutes at the top, do not lean back.',
         ],
       },
       {
-        id: 'leg-press',
-        name: 'Leg press',
+        id: 'db-hip-thrust',
+        name: 'Dumbbell hip thrust',
         group: 'legs',
+        equipment: ['dumbbell', 'bench'],
         sets: 3,
         reps: '12–15',
         restSec: 90,
-        loadPerBw: 1.2,
-        cue: 'Do not lock the knees hard at the top.',
+        loadPerBw: 0.4,
+        loadNote: 'one dumbbell across the hips',
+        cue: 'Tuck the chin, ribs down, squeeze hard at the top.',
         form: [
-          'Feet shoulder-width, mid-platform.',
-          'Lower until the knees reach about 90°, keeping your lower back flat against the pad.',
-          'Press through the whole foot, stopping just short of full lockout.',
+          'Upper back against the bench, feet flat and about shoulder-width.',
+          'Rest one dumbbell across your hips — a towel or mat under it saves the bruising.',
+          'Drive the hips up until your torso is parallel to the floor.',
+          'Hold one second at the top, lower under control.',
         ],
       },
       {
-        id: 'leg-curl',
-        name: 'Seated leg curl',
+        id: 'nordic-curl',
+        name: 'Band-assisted leg curl',
         group: 'legs',
+        equipment: ['band'],
         sets: 3,
-        reps: '12–15',
+        reps: '10–15',
         restSec: 75,
-        loadNote: 'Machine — pick a weight where the last 2 reps are hard',
-        cue: 'Slow on the way back, 2 seconds.',
-        form: ['Pad just above the heels.', 'Curl until the knees are fully bent.', 'Control the return — this is where hamstrings grow.'],
+        loadNote: 'band tension',
+        cue: 'Slow on the way back, 3 seconds.',
+        form: [
+          'Anchor the band low behind you and loop it around one ankle.',
+          'Lying face down or standing, curl the heel toward your glute against the band.',
+          'Control the return slowly — the lengthening half is where hamstrings grow.',
+        ],
+        upgrade: 'A substitute for the leg curl machine. Hamstrings also get direct work from the RDL, so this is supplementary rather than critical.',
       },
       {
         id: 'calf-raise',
-        name: 'Standing calf raise',
+        name: 'Single-leg calf raise',
         group: 'legs',
+        equipment: ['dumbbell'],
         sets: 3,
-        reps: '15–20',
+        reps: '15–20 per leg',
         restSec: 60,
-        loadPerBw: 0.3,
+        loadPerBw: 0.25,
+        loadNote: 'one dumbbell, held at your side',
         cue: 'Full range: deep stretch at the bottom, pause at the top.',
-        form: ['Balls of the feet on a step.', 'Drop the heels below the step for a full stretch.', 'Rise to the tallest position and hold 1 second.'],
+        form: [
+          'Stand on one foot with the ball of the foot on a step or book, dumbbell in the same-side hand.',
+          'Drop the heel below the step for a full stretch.',
+          'Rise to the tallest position and hold one second.',
+        ],
       },
       {
         id: 'plank',
         name: 'Plank',
         chinese: '平板支撐',
         group: 'core',
+        equipment: ['bodyweight'],
         sets: 3,
         reps: '30–60 sec',
         restSec: 60,
@@ -133,13 +195,14 @@ export const PROGRAM: TrainingDay[] = [
     name: 'Upper A',
     focus: 'Horizontal push and pull',
     type: 'lift',
-    durationMin: 55,
+    durationMin: 50,
     exercises: [
       {
         id: 'db-bench',
         name: 'Dumbbell bench press',
         chinese: '啞鈴臥推',
         group: 'chest',
+        equipment: ['dumbbell', 'bench'],
         sets: 4,
         reps: '8–12',
         restSec: 120,
@@ -150,74 +213,97 @@ export const PROGRAM: TrainingDay[] = [
           'Lie back with the dumbbells at chest level, elbows about 45° from your torso — not flared to 90°.',
           'Press up and slightly inward until the dumbbells nearly touch.',
           'Lower under control until you feel a stretch across the chest.',
+          'To get heavy dumbbells into position, rest them on your knees and kick back as you lie down.',
         ],
-        swap: 'Barbell bench press if a bench and rack are free.',
       },
       {
         id: 'db-row',
         name: 'Single-arm dumbbell row',
         chinese: '單臂啞鈴划船',
         group: 'back',
+        equipment: ['dumbbell', 'bench'],
         sets: 4,
-        reps: '10–12',
+        reps: '10–12 per arm',
         restSec: 90,
-        loadPerBw: 0.3,
+        loadPerBw: 0.35,
         cue: 'Pull with the elbow, not the hand.',
         form: [
-          'One knee and hand on a bench, back flat and roughly parallel to the floor.',
+          'One knee and hand on the bench, back flat and roughly parallel to the floor.',
           'Let the dumbbell hang, then pull it to your hip — not your shoulder.',
           'Squeeze the shoulder blade toward your spine at the top.',
           'Lower all the way down for a full stretch.',
         ],
+        upgrade: 'Your heaviest back exercise. Without a pull-up bar this carries most of the back work, so treat it as a main lift, not an accessory.',
       },
       {
-        id: 'lat-pulldown',
-        name: 'Lat pulldown',
-        chinese: '高位下拉',
+        id: 'band-pulldown',
+        name: 'Band lat pulldown',
         group: 'back',
+        equipment: ['band'],
         sets: 3,
-        reps: '10–12',
-        restSec: 90,
-        loadPerBw: 0.6,
-        cue: 'Drive the elbows down to your ribs.',
-        form: ['Grip slightly wider than shoulders.', 'Lean back about 15°, chest up.', 'Pull the bar to your upper chest.', 'Control the return until the arms are fully extended.'],
-        swap: 'Assisted pull-ups — work toward unassisted.',
+        reps: '12–20',
+        restSec: 75,
+        loadNote: 'band tension',
+        cue: 'Drive the elbows down toward your ribs.',
+        form: [
+          'Anchor the band high — a door anchor, or over a solid beam.',
+          'Kneel far enough back that the band is under tension at the top.',
+          'Pull the handles down to your upper chest, elbows driving down and back.',
+          'Control the return until the arms are fully extended overhead.',
+        ],
+        upgrade: 'A stand-in for vertical pulling. A pull-up bar would replace this outright — bands lose tension exactly where your lats are strongest, so this is the weakest exercise in the programme.',
       },
       {
         id: 'db-shoulder-press',
         name: 'Seated dumbbell shoulder press',
         group: 'shoulders',
+        equipment: ['dumbbell', 'bench'],
         sets: 3,
         reps: '10–12',
         restSec: 90,
         loadPerBw: 0.18,
         loadNote: 'per dumbbell',
-        cue: 'Do not let the lower back arch off the seat.',
-        form: ['Start with dumbbells at ear height, palms forward.', 'Press up until the arms are nearly straight.', 'Lower under control to ear height.'],
+        cue: 'Do not let the lower back arch off the bench.',
+        form: [
+          'Set the bench upright, dumbbells at ear height, palms forward.',
+          'Press up until the arms are nearly straight.',
+          'Lower under control to ear height.',
+        ],
       },
       {
         id: 'lateral-raise',
         name: 'Lateral raise',
         chinese: '側平舉',
         group: 'shoulders',
+        equipment: ['dumbbell'],
         sets: 3,
-        reps: '12–15',
+        reps: '12–20',
         restSec: 60,
         loadPerBw: 0.07,
         loadNote: 'per dumbbell — lighter than you think',
         cue: 'Lead with the elbows, stop at shoulder height.',
-        form: ['Slight bend in the elbows, held throughout.', 'Raise out to the sides to shoulder height, no higher.', 'Lower slowly, 2 seconds.'],
+        form: [
+          'Slight bend in the elbows, held throughout.',
+          'Raise out to the sides to shoulder height, no higher.',
+          'Lower slowly, 2 seconds.',
+        ],
       },
       {
-        id: 'face-pull',
-        name: 'Face pull',
+        id: 'band-face-pull',
+        name: 'Band face pull',
         group: 'shoulders',
+        equipment: ['band'],
         sets: 3,
         reps: '15–20',
         restSec: 60,
-        loadNote: 'Cable — light',
+        loadNote: 'band tension — light',
         cue: 'Pull toward your forehead, ending in a double-bicep pose.',
-        form: ['Rope at upper-chest height.', 'Pull toward your face, separating the rope ends.', 'External rotation at the end is the whole point.'],
+        form: [
+          'Anchor the band at upper-chest height.',
+          'Pull toward your face, separating your hands as you go.',
+          'The external rotation at the end is the whole point.',
+        ],
+        upgrade: 'Bands are genuinely better than cables here — tension rises as you pull, matching where the movement gets easier.',
       },
     ],
   },
@@ -231,7 +317,8 @@ export const PROGRAM: TrainingDay[] = [
     exercises: [],
     cardio: {
       what: 'Easy jog',
-      detail: 'Conversational pace — you should be able to speak in full sentences. If you cannot, slow down. Most people run their easy days too hard and their hard days too easy.',
+      detail:
+        'Conversational pace — you should be able to speak in full sentences. If you cannot, slow down. Most people run their easy days too hard and their hard days too easy.',
       minutes: 40,
     },
   },
@@ -241,71 +328,96 @@ export const PROGRAM: TrainingDay[] = [
     name: 'Lower B',
     focus: 'Hinge pattern, hamstrings and glutes',
     type: 'lift',
-    durationMin: 55,
+    durationMin: 50,
     exercises: [
       {
-        id: 'deadlift',
-        name: 'Trap-bar deadlift',
-        chinese: '硬舉',
+        id: 'db-deadlift',
+        name: 'Dumbbell deadlift',
+        chinese: '啞鈴硬舉',
         group: 'legs',
+        equipment: ['dumbbell'],
         sets: 4,
-        reps: '5–8',
-        restSec: 150,
-        loadPerBw: 0.8,
-        cue: 'Push the floor away rather than pulling the bar up.',
+        reps: '8–10',
+        restSec: 120,
+        loadPerBw: 0.4,
+        loadNote: 'per dumbbell',
+        cue: 'Push the floor away rather than pulling the weight up.',
         form: [
-          'Stand inside the trap bar, feet hip-width.',
-          'Hinge down and grip the handles, chest up, back flat, shoulders slightly ahead of the bar.',
-          'Take the slack out of the bar before you pull — you should feel tension in your lats.',
+          'Stand with a dumbbell outside each foot, feet hip-width.',
+          'Hinge down and grip them, chest up, back flat.',
+          'Take the slack out before you pull — you should feel tension in your lats.',
           'Drive through the floor, standing up in one piece. Hips and shoulders rise together.',
           'Lower under control. Do not round your back to save a rep.',
         ],
-        swap: 'Conventional barbell deadlift, or dumbbell deadlift if no trap bar.',
       },
       {
-        id: 'bulgarian-split',
-        name: 'Bulgarian split squat',
+        id: 'single-leg-rdl',
+        name: 'Single-leg Romanian deadlift',
         group: 'legs',
+        equipment: ['dumbbell'],
         sets: 3,
         reps: '10–12 per leg',
         restSec: 90,
-        loadPerBw: 0.15,
+        loadPerBw: 0.22,
         loadNote: 'per dumbbell',
-        cue: 'Most of the weight on the front leg — the back leg is a kickstand.',
-        form: ['Rear foot on a bench, front foot about two feet ahead.', 'Drop straight down until the back knee nears the floor.', 'Drive up through the front heel.'],
+        cue: 'Hips square to the floor — do not let the free hip rotate open.',
+        form: [
+          'Stand on one leg, dumbbell in the opposite hand.',
+          'Hinge forward, letting the free leg travel straight back as a counterweight.',
+          'Lower until your torso is near parallel and you feel the hamstring stretch.',
+          'Return by driving the standing hip forward.',
+        ],
+        upgrade: 'Loads one hamstring at a time, so 32 kg dumbbells stay challenging long after bilateral RDLs get light.',
       },
       {
-        id: 'hip-thrust',
-        name: 'Hip thrust',
+        id: 'db-step-up',
+        name: 'Dumbbell step-up',
         group: 'legs',
+        equipment: ['dumbbell', 'bench'],
         sets: 3,
-        reps: '10–12',
+        reps: '10–12 per leg',
         restSec: 90,
-        loadPerBw: 0.6,
-        cue: 'Tuck the chin, ribs down, squeeze hard at the top.',
-        form: ['Upper back on a bench, bar across the hips with a pad.', 'Drive hips up until the torso is parallel to the floor.', 'Hold 1 second at the top.'],
+        loadPerBw: 0.2,
+        loadNote: 'per dumbbell',
+        cue: 'Drive through the top foot — do not push off the bottom one.',
+        form: [
+          'Dumbbell in each hand, one foot flat on the bench.',
+          'Step up by driving through the bench foot, standing tall at the top.',
+          'Lower under control, tapping the floor lightly before the next rep.',
+        ],
       },
       {
-        id: 'leg-extension',
-        name: 'Leg extension',
+        id: 'db-sumo-squat',
+        name: 'Dumbbell sumo squat',
         group: 'legs',
+        equipment: ['dumbbell'],
         sets: 3,
         reps: '12–15',
         restSec: 75,
-        loadNote: 'Machine',
-        cue: 'Pause 1 second at the top.',
-        form: ['Pad on the lower shin.', 'Extend until the legs are straight.', 'Lower slowly.'],
+        loadPerBw: 0.4,
+        loadNote: 'one dumbbell, held between the legs',
+        cue: 'Toes turned out about 30°, knees tracking over them.',
+        form: [
+          'Wide stance, one dumbbell hanging between your legs.',
+          'Squat straight down, keeping the torso upright.',
+          'Drive up through the heels, squeezing the glutes at the top.',
+        ],
       },
       {
-        id: 'hanging-knee-raise',
-        name: 'Hanging knee raise',
+        id: 'lying-leg-raise',
+        name: 'Lying leg raise',
         group: 'core',
+        equipment: ['bodyweight'],
         sets: 3,
-        reps: '10–15',
+        reps: '12–15',
         restSec: 60,
         cue: 'Curl the pelvis up — do not just swing the legs.',
-        form: ['Hang from a bar, shoulders active.', 'Raise the knees toward your chest, rolling the pelvis under.', 'Lower slowly without swinging.'],
-        swap: 'Lying leg raise if grip fails first.',
+        form: [
+          'Lie on your back, hands under your lower back or gripping something behind your head.',
+          'Raise the legs until the hips lift slightly off the floor.',
+          'Lower slowly without letting the lower back arch away from the floor.',
+        ],
+        upgrade: 'A pull-up bar would let you do hanging knee raises, which load the abs considerably harder.',
       },
     ],
   },
@@ -313,84 +425,118 @@ export const PROGRAM: TrainingDay[] = [
     id: 'day-5',
     day: 5,
     name: 'Upper B',
-    focus: 'Vertical push and pull, arms',
+    focus: 'Vertical push, arms and back detail',
     type: 'lift',
-    durationMin: 55,
+    durationMin: 50,
     exercises: [
       {
-        id: 'ohp',
-        name: 'Overhead press',
+        id: 'db-ohp',
+        name: 'Standing dumbbell overhead press',
         chinese: '肩上推舉',
         group: 'shoulders',
+        equipment: ['dumbbell'],
         sets: 4,
-        reps: '6–10',
+        reps: '8–10',
         restSec: 120,
-        loadPerBw: 0.4,
+        loadPerBw: 0.16,
+        loadNote: 'per dumbbell',
         cue: 'Squeeze the glutes so the press does not become a lean-back.',
         form: [
-          'Bar at collarbone height, hands just outside shoulder-width.',
-          'Move your head back slightly so the bar can pass your face.',
-          'Press straight up, then push your head "through" the window at lockout.',
-          'The bar finishes over the mid-foot, not in front of you.',
+          'Dumbbells at shoulder height, palms forward, feet hip-width.',
+          'Brace the core hard — standing means your trunk stabilises the load.',
+          'Press straight up until the arms lock out over the shoulders.',
+          'Lower under control to shoulder height.',
         ],
+        swap: 'Seated on the upright bench if your lower back rounds.',
       },
       {
-        id: 'pullup',
-        name: 'Pull-up or assisted pull-up',
-        chinese: '引體向上',
+        id: 'db-pullover',
+        name: 'Dumbbell pullover',
         group: 'back',
-        sets: 4,
-        reps: '6–10',
-        restSec: 120,
-        loadNote: 'Bodyweight — use the machine or a band as needed',
-        cue: 'Start each rep from a dead hang.',
-        form: ['Grip slightly wider than shoulders.', 'Pull the chest toward the bar, elbows driving down.', 'Chin clears the bar.', 'Lower all the way to a straight-arm hang.'],
+        equipment: ['dumbbell', 'bench'],
+        sets: 3,
+        reps: '12–15',
+        restSec: 90,
+        loadPerBw: 0.25,
+        loadNote: 'one dumbbell, held with both hands',
+        cue: 'Keep the elbows slightly bent and fixed — the movement is at the shoulder.',
+        form: [
+          'Lie on the bench holding one dumbbell over your chest, both hands cupping the top head.',
+          'Lower it back behind your head in an arc until you feel a deep stretch through the lats.',
+          'Pull it back over your chest using your lats, not your arms.',
+        ],
+        upgrade: 'The best lat exercise available without a bar, since it loads them in a stretched position. A pull-up would still beat it.',
       },
       {
         id: 'incline-db-press',
         name: 'Incline dumbbell press',
         group: 'chest',
+        equipment: ['dumbbell', 'bench'],
         sets: 3,
         reps: '10–12',
         restSec: 90,
-        loadPerBw: 0.22,
+        loadPerBw: 0.24,
         loadNote: 'per dumbbell',
         cue: 'Bench at 30°, not 45° — higher shifts the work to the shoulders.',
-        form: ['Dumbbells at upper-chest level.', 'Press up and slightly together.', 'Lower until you feel the stretch.'],
+        form: [
+          'Set the bench to the second or third notch, dumbbells at upper-chest level.',
+          'Press up and slightly together.',
+          'Lower until you feel the stretch across the upper chest.',
+        ],
       },
       {
-        id: 'cable-row',
-        name: 'Seated cable row',
+        id: 'chest-supported-row',
+        name: 'Chest-supported dumbbell row',
         group: 'back',
+        equipment: ['dumbbell', 'bench'],
         sets: 3,
-        reps: '10–12',
+        reps: '12–15',
         restSec: 90,
-        loadPerBw: 0.55,
-        cue: 'Chest stays still — do not rock backward to move the weight.',
-        form: ['Slight forward lean at the stretch, torso upright at the pull.', 'Pull to the navel.', 'Squeeze the shoulder blades together for 1 second.'],
+        loadPerBw: 0.2,
+        loadNote: 'per dumbbell',
+        cue: 'Chest stays glued to the bench — that is what removes the cheating.',
+        form: [
+          'Set the bench to about 30° incline and lie face down on it.',
+          'Let the dumbbells hang straight down.',
+          'Row them to your hips, squeezing the shoulder blades together.',
+          'Lower fully to a complete stretch.',
+        ],
+        upgrade: 'Replaces the seated cable row. Removing your legs and lower back from the movement means the back does all the work.',
       },
       {
         id: 'db-curl',
         name: 'Incline dumbbell curl',
         group: 'arms',
+        equipment: ['dumbbell', 'bench'],
         sets: 3,
         reps: '10–12',
         restSec: 60,
         loadPerBw: 0.12,
         loadNote: 'per dumbbell',
         cue: 'Elbows stay behind the torso — that stretch is the point.',
-        form: ['Sit on a 45° incline, arms hanging straight down.', 'Curl without letting the elbows drift forward.', 'Lower fully.'],
+        form: [
+          'Sit back on a 45° incline, arms hanging straight down.',
+          'Curl without letting the elbows drift forward.',
+          'Lower fully to a dead hang.',
+        ],
       },
       {
-        id: 'triceps-pushdown',
-        name: 'Cable triceps pushdown',
+        id: 'db-skullcrusher',
+        name: 'Dumbbell skullcrusher',
         group: 'arms',
+        equipment: ['dumbbell', 'bench'],
         sets: 3,
         reps: '12–15',
         restSec: 60,
-        loadPerBw: 0.3,
-        cue: 'Elbows pinned to your sides.',
-        form: ['Elbows tucked, upper arms motionless.', 'Extend fully, squeeze 1 second.', 'Return to 90° only.'],
+        loadPerBw: 0.1,
+        loadNote: 'per dumbbell',
+        cue: 'Elbows point at the ceiling and stay there.',
+        form: [
+          'Lie on the flat bench, dumbbells over your chest, palms facing each other.',
+          'Bend at the elbows only, lowering the dumbbells beside your ears.',
+          'Extend back up without letting the upper arms drift.',
+        ],
+        upgrade: 'Replaces the cable pushdown. Loads the triceps in a stretched position, which cables do not.',
       },
     ],
   },
@@ -404,7 +550,8 @@ export const PROGRAM: TrainingDay[] = [
     exercises: [],
     cardio: {
       what: 'Alternate weekly',
-      detail: 'Week A — intervals: 10 min easy warm-up, then 6 × (1 min hard / 2 min easy), 8 min cool-down. Week B — long run: 50–60 min at conversational pace. Alternating keeps the aerobic base growing without piling fatigue onto your leg days.',
+      detail:
+        'Week A — intervals: 10 min easy warm-up, then 6 × (1 min hard / 2 min easy), 8 min cool-down. Week B — long run: 50–60 min at conversational pace. Alternating keeps the aerobic base growing without piling fatigue onto your leg days.',
       minutes: 35,
     },
   },
@@ -418,47 +565,114 @@ export const PROGRAM: TrainingDay[] = [
     exercises: [],
     cardio: {
       what: 'Full rest or a walk',
-      detail: 'Muscle is built during recovery, not during the session. A 20–30 minute walk and 15 minutes of stretching is ideal; doing nothing is also fine.',
+      detail:
+        'Muscle is built during recovery, not during the session. A 20–30 minute walk and 15 minutes of stretching is ideal; doing nothing is also fine.',
       minutes: 0,
     },
   },
 ]
 
-/** Resolve a bodyweight-relative starting load into kilograms. */
-export function resolveLoad(ex: Exercise, weightKg: number): string {
-  if (ex.loadPerBw) {
-    const kg = Math.round((ex.loadPerBw * weightKg) / 2.5) * 2.5
-    return `~${kg} kg${ex.loadNote ? ` (${ex.loadNote})` : ''}`
+/**
+ * Goal changes training, not just diet. In a deficit you keep the load heavy to
+ * hold onto muscle but cut total volume, because recovery is worse when
+ * underfed; in a surplus you can afford more.
+ */
+export const GOAL_TRAINING: Record<Goal, { setDelta: number; label: string; note: string }> = {
+  cut: {
+    setDelta: -1,
+    label: 'Reduced volume',
+    note: 'One set fewer per exercise. Under-eating blunts recovery, so keep the weight heavy — that is what preserves muscle — and cut the volume instead.',
+  },
+  recomp: {
+    setDelta: 0,
+    label: 'Standard volume',
+    note: 'The baseline. A small deficit is recoverable at this volume.',
+  },
+  'lean-bulk': {
+    setDelta: 1,
+    label: 'Increased volume',
+    note: 'One extra set per exercise. Eating in a surplus means you can recover from more work, and more work drives more growth.',
+  },
+  maintain: {
+    setDelta: 0,
+    label: 'Standard volume',
+    note: 'The baseline — enough to keep progressing without needing a surplus.',
+  },
+}
+
+/** Activity level shifts how much running sits alongside the lifting. */
+export const ACTIVITY_CARDIO: Record<string, { runsPerWeek: number; note: string }> = {
+  sedentary: { runsPerWeek: 1, note: 'Start with one easy run a week and build from there.' },
+  light: { runsPerWeek: 2, note: 'Two runs a week alongside the four lifting days.' },
+  moderate: { runsPerWeek: 2, note: 'Two runs a week alongside the four lifting days.' },
+  active: { runsPerWeek: 3, note: 'Three runs a week. Watch that leg-day quality does not suffer.' },
+  'very-active': {
+    runsPerWeek: 3,
+    note: 'Three runs a week, and consider a genuine rest day if the lifts start regressing.',
+  },
+}
+
+/**
+ * Resolve a bodyweight-relative starting load into kilograms, rounded to the
+ * dumbbell's adjustment step and clamped to its ceiling.
+ */
+export function resolveLoad(
+  ex: Exercise,
+  weightKg: number,
+  maxKg = DUMBBELL_MAX_KG,
+): { text: string; atCeiling: boolean } {
+  if (!ex.loadPerBw) return { text: ex.loadNote ?? 'Bodyweight', atCeiling: false }
+
+  const raw = ex.loadPerBw * weightKg
+  const stepped = Math.max(
+    DUMBBELL_STEP_KG,
+    Math.round(raw / DUMBBELL_STEP_KG) * DUMBBELL_STEP_KG,
+  )
+  const kg = Math.min(stepped, maxKg)
+  return {
+    text: `${kg} kg${ex.loadNote ? ` (${ex.loadNote})` : ''}`,
+    atCeiling: stepped > maxKg,
   }
-  return ex.loadNote ?? 'Bodyweight'
+}
+
+/** Apply the goal's volume adjustment, never dropping below two working sets. */
+export function adjustedSets(ex: Exercise, goal: Goal): number {
+  return Math.max(2, ex.sets + GOAL_TRAINING[goal].setDelta)
 }
 
 export const PROGRESSION_RULES = [
   {
     title: 'Double progression',
-    body: 'Stay at the same weight until you hit the top of the rep range on every set. Then add the smallest increment available and drop back to the bottom of the range.',
+    body: 'Stay at the same weight until you hit the top of the rep range on every set. Then add one step — 2 kg on your dumbbells — and drop back to the bottom of the range.',
   },
   {
     title: 'Leave 1–2 reps in reserve',
-    body: 'Stop each set when you could manage one or two more good reps. Training to absolute failure on compound lifts costs more recovery than the extra stimulus is worth.',
+    body: 'Stop each set when you could manage one or two more good reps. Training to absolute failure costs more recovery than the extra stimulus is worth.',
   },
   {
-    title: 'Add weight in small steps',
-    body: '2.5 kg on lower-body lifts, 1–2 kg on upper. Small jumps you can keep making beat big ones that stall you for a month.',
+    title: 'When you hit 32 kg, change the exercise, not the weight',
+    body: 'Your dumbbells cap out. Once an exercise gets easy at the top weight, switch to a harder variation — bilateral to single-leg, flat to incline, or add a 3-second lowering phase. Unilateral work is the main reason this programme stays hard without heavier weights.',
   },
   {
     title: 'Deload every 6–8 weeks',
-    body: 'Take one week at roughly 60% of your usual volume. You will come back stronger — the adaptation happens when the fatigue clears.',
+    body: 'Take one week at roughly 60% of your usual volume. You will come back stronger — adaptation happens when the fatigue clears.',
   },
   {
     title: 'Expect slower progress in a deficit',
-    body: 'Recomposition means adding muscle while eating below maintenance. Strength will still go up, just more gradually than it would on a surplus. Holding your lifts steady while bodyweight falls is itself a win.',
+    body: 'Recomposition means adding muscle while eating below maintenance. Strength will still climb, just gradually. Holding your lifts steady while bodyweight falls is itself a win.',
   },
 ]
 
 export const WARMUP = [
-  '5 minutes easy cardio — bike, row or brisk treadmill walk.',
+  '5 minutes easy cardio — a brisk walk, skipping, or jogging on the spot.',
   'Leg swings, 10 each direction per leg.',
-  'Arm circles and band pull-aparts, 15 each.',
+  'Band pull-aparts, 15 — especially before upper days.',
   'Two ramp-up sets of your first exercise: one at ~50% for 8 reps, one at ~75% for 3.',
+]
+
+/** Exercises a pull-up bar would add or upgrade, listed for the equipment note. */
+export const PULLUP_BAR_UPGRADES = [
+  'Pull-ups and chin-ups — the single best back builder, and nothing here fully replaces them',
+  'Hanging knee raises, which load the abs far harder than lying raises',
+  'Dead hangs for grip and shoulder health',
 ]

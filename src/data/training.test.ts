@@ -1,0 +1,111 @@
+import { describe, it, expect } from 'vitest'
+import {
+  PROGRAM, GOAL_TRAINING, ACTIVITY_CARDIO, DUMBBELL_MAX_KG, DUMBBELL_STEP_KG,
+  resolveLoad, adjustedSets, type Exercise,
+} from './training'
+
+const ex = (over: Partial<Exercise> = {}): Exercise => ({
+  id: 'test',
+  name: 'Test',
+  group: 'legs',
+  equipment: ['dumbbell'],
+  sets: 3,
+  reps: '8–12',
+  restSec: 90,
+  cue: '',
+  form: [],
+  ...over,
+})
+
+describe('equipment constraints', () => {
+  const all = PROGRAM.flatMap((d) => d.exercises)
+
+  it('never requires equipment the user does not own', () => {
+    const owned = new Set(['dumbbell', 'bench', 'band', 'bodyweight'])
+    const bad = all.filter((e) => e.equipment.some((q) => !owned.has(q)))
+    expect(bad.map((e) => e.id)).toEqual([])
+  })
+
+  it('gives every exercise at least one equipment tag', () => {
+    expect(all.filter((e) => e.equipment.length === 0)).toEqual([])
+  })
+
+  it('still trains every major muscle group', () => {
+    const groups = new Set(all.map((e) => e.group))
+    for (const g of ['legs', 'chest', 'back', 'shoulders', 'arms', 'core']) {
+      expect(groups.has(g as never)).toBe(true)
+    }
+  })
+
+  it('keeps four lifting days and two runs', () => {
+    expect(PROGRAM.filter((d) => d.type === 'lift')).toHaveLength(4)
+    expect(PROGRAM.filter((d) => d.type === 'cardio')).toHaveLength(2)
+  })
+})
+
+describe('resolveLoad', () => {
+  it('rounds to the dumbbell adjustment step', () => {
+    const { text } = resolveLoad(ex({ loadPerBw: 0.3 }), 78.8)
+    const kg = Number(text.split(' ')[0])
+    expect(kg % DUMBBELL_STEP_KG).toBe(0)
+  })
+
+  it('scales with bodyweight', () => {
+    const light = resolveLoad(ex({ loadPerBw: 0.2 }), 60).text
+    const heavy = resolveLoad(ex({ loadPerBw: 0.2 }), 90).text
+    expect(Number(light.split(' ')[0])).toBeLessThan(Number(heavy.split(' ')[0]))
+  })
+
+  it('clamps to the dumbbell ceiling and flags it', () => {
+    const r = resolveLoad(ex({ loadPerBw: 2 }), 78.8)
+    expect(Number(r.text.split(' ')[0])).toBe(DUMBBELL_MAX_KG)
+    expect(r.atCeiling).toBe(true)
+  })
+
+  it('does not flag a load within the ceiling', () => {
+    expect(resolveLoad(ex({ loadPerBw: 0.1 }), 78.8).atCeiling).toBe(false)
+  })
+
+  it('never suggests less than one adjustment step', () => {
+    const kg = Number(resolveLoad(ex({ loadPerBw: 0.001 }), 40).text.split(' ')[0])
+    expect(kg).toBeGreaterThanOrEqual(DUMBBELL_STEP_KG)
+  })
+
+  it('falls back to the note for unweighted exercises', () => {
+    expect(resolveLoad(ex({ loadPerBw: undefined }), 78.8).text).toBe('Bodyweight')
+  })
+})
+
+describe('adjustedSets', () => {
+  it('cuts volume on a cut and adds it on a bulk', () => {
+    const e = ex({ sets: 4 })
+    expect(adjustedSets(e, 'cut')).toBe(3)
+    expect(adjustedSets(e, 'recomp')).toBe(4)
+    expect(adjustedSets(e, 'lean-bulk')).toBe(5)
+    expect(adjustedSets(e, 'maintain')).toBe(4)
+  })
+
+  it('never drops below two working sets', () => {
+    expect(adjustedSets(ex({ sets: 2 }), 'cut')).toBe(2)
+  })
+
+  it('changes total session volume when the goal changes', () => {
+    const day = PROGRAM.find((d) => d.type === 'lift')!
+    const total = (g: Parameters<typeof adjustedSets>[1]) =>
+      day.exercises.reduce((a, e) => a + adjustedSets(e, g), 0)
+    expect(total('cut')).toBeLessThan(total('recomp'))
+    expect(total('lean-bulk')).toBeGreaterThan(total('recomp'))
+  })
+})
+
+describe('goal and activity metadata', () => {
+  it('covers every goal', () => {
+    for (const g of ['cut', 'recomp', 'lean-bulk', 'maintain'] as const) {
+      expect(GOAL_TRAINING[g].note).toBeTruthy()
+    }
+  })
+
+  it('scales weekly runs with activity level', () => {
+    expect(ACTIVITY_CARDIO.sedentary.runsPerWeek).toBeLessThan(ACTIVITY_CARDIO.active.runsPerWeek)
+  })
+})

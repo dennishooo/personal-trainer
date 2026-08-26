@@ -135,15 +135,11 @@ export function PatternFigure({ pattern, size = 96 }: { pattern: keyof typeof FI
 
 /** Equipment icon shown alongside each exercise, from the Tabler set. */
 export function EquipmentIcon({ id, size = 20 }: { id: string; size?: number }) {
-  const name: IconName = /pullup|pulldown|row|face-pull/.test(id)
-    ? 'weight'
-    : /deadlift|squat|bench|ohp|press|thrust/.test(id)
-      ? 'barbell'
-      : /curl|raise|pushdown|extension/.test(id)
-        ? 'dumbbell'
-        : /plank|knee/.test(id)
-          ? 'stretching'
-          : 'barbell'
+  const name: IconName = /band|pulldown|face-pull/.test(id)
+    ? 'stretching'
+    : /plank|leg-raise/.test(id)
+      ? 'yoga'
+      : 'dumbbell'
   return <Icon name={name} size={size} />
 }
 
@@ -187,10 +183,10 @@ export function MuscleMap({ groups, size = 84 }: { groups: MuscleGroup[]; size?:
 
 /** Map an exercise id onto its movement pattern. */
 export function patternFor(exerciseId: string): keyof typeof FIGURES {
-  if (/squat|leg-press|split|extension/.test(exerciseId)) return 'squat'
-  if (/deadlift|rdl|thrust|leg-curl/.test(exerciseId)) return 'hinge'
-  if (/bench|press|pushdown|lateral-raise|ohp|calf/.test(exerciseId)) return 'push'
-  if (/row|pulldown|pullup|face-pull|db-curl/.test(exerciseId)) return 'pull'
-  if (/plank|knee-raise/.test(exerciseId)) return 'core'
+  if (/squat|split|step-up|calf/.test(exerciseId)) return 'squat'
+  if (/deadlift|rdl|thrust|leg-curl|nordic/.test(exerciseId)) return 'hinge'
+  if (/bench|press|ohp|skullcrusher|lateral-raise/.test(exerciseId)) return 'push'
+  if (/row|pulldown|pullover|face-pull|curl$/.test(exerciseId)) return 'pull'
+  if (/plank|leg-raise/.test(exerciseId)) return 'core'
   return 'squat'
 }

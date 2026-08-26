@@ -19,7 +19,7 @@ doses, and starting loads in the gym.
 | **Today** | Calorie and macro targets, BMI against Asian-Pacific cut-offs, the trend verdict, weight logging and chart |
 | **Week** | Seven days of meals and training, plus a consolidated shopping list |
 | **Meals** | 27 recipes with scaled portions and step-by-step method; ordering guides for eating out |
-| **Training** | 4-day upper/lower split with two runs, form breakdowns, stick-figure diagrams |
+| **Training** | 4-day upper/lower split for a home setup, form breakdowns, movement diagrams |
 | **Supplements** | Evidence-tiered list with HK sourcing and monthly cost, grouped into a daily schedule |
 | **Profile** | Inputs, goal, activity level, and a full breakdown of how each number was derived |
 
@@ -38,6 +38,24 @@ Nothing is suggested until there are at least 4 weigh-ins spanning 14 days.
 
 Age matters too: BMR falls with age via Mifflin–St Jeor, and the protein target *rises*
 after 40 to offset anabolic resistance.
+
+Goal and activity drive **training** as well as diet — a cut drops one set per exercise
+(recovery is worse when underfed, so you hold the weight and cut volume instead), a lean
+bulk adds one, and activity level sets how many runs sit alongside the lifting.
+
+## Equipment
+
+The programme assumes **adjustable dumbbells (2–32 kg), an adjustable bench and resistance
+bands** — no gym, no barbell, no machines. Two consequences shape the exercise selection:
+
+- No heavy bilateral loading, so unilateral work (split squats, single-leg RDLs, step-ups)
+  carries the legs. One leg at a time keeps 32 kg dumbbells challenging.
+- No vertical pulling, which is the one real hole in a dumbbell setup. Band pulldowns and
+  dumbbell pullovers partly cover it; a pull-up bar would close it properly.
+
+Loads are rounded to the 2 kg adjustment step and clamped to the 32 kg ceiling, with a
+warning when an exercise hits the cap — at that point you change the variation, not the
+weight. Change `DUMBBELL_MAX_KG` in `src/data/training.ts` if your setup differs.
 
 The app also flags when the **goal itself** should change — once BMI enters the healthy band,
 sitting in a deficit stops being useful.

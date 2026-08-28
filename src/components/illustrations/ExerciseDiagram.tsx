@@ -111,6 +111,16 @@ const FIGURES: Record<string, { title: string; body: React.ReactNode }> = {
   },
 }
 
+/** Plain-English name for each movement pattern, shown next to the figure so a beginner isn't left guessing. */
+export const PATTERN_LABEL: Record<keyof typeof FIGURES, string> = {
+  squat: 'Squat',
+  hinge: 'Hip hinge',
+  push: 'Press',
+  pull: 'Pull',
+  core: 'Core brace',
+  run: 'Running',
+}
+
 export function PatternFigure({ pattern, size = 96 }: { pattern: keyof typeof FIGURES; size?: number }) {
   const f = FIGURES[pattern] ?? FIGURES.squat
   return (

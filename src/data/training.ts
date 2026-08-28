@@ -18,11 +18,17 @@ export interface Exercise {
    */
   loadPerBw?: number
   loadNote?: string
+  /** Plain-English starting position/stance, shown before the form steps so a beginner knows how to set up. */
+  position: string
   cue: string
   form: string[]
   swap?: string
   /** Shown when this exercise is a workaround for equipment the user lacks. */
   upgrade?: string
+  /** ExRx.net demo page for this exercise, linked as "Watch form". */
+  formUrl: string
+  /** True when formUrl is the exact named variant; false when it's the closest ExRx page for the same movement (e.g. their dumbbell page is paywalled). */
+  formUrlExact: boolean
 }
 
 export interface TrainingDay {
@@ -75,6 +81,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 105,
         loadPerBw: 0.3,
         loadNote: 'one dumbbell, held at the chest',
+        position: 'Standing, feet shoulder-width apart',
         cue: 'Chest tall, elbows inside the knees at the bottom.',
         form: [
           'Hold one dumbbell vertically against your chest, cupping the top head, elbows tucked down.',
@@ -83,6 +90,8 @@ export const PROGRAM: TrainingDay[] = [
           'Drive up through mid-foot. Knees and chest rise together, not the hips first.',
         ],
         swap: 'Two dumbbells at the shoulders once one gets too light.',
+        formUrl: 'https://exrx.net/WeightExercises/Kettlebell/KBGobletSquat',
+        formUrlExact: false,
       },
       {
         id: 'bulgarian-split',
@@ -95,6 +104,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 105,
         loadPerBw: 0.18,
         loadNote: 'per dumbbell',
+        position: 'Standing, rear foot up on a bench behind you',
         cue: 'Most of the weight on the front leg — the back leg is a kickstand.',
         form: [
           'Rear foot on the bench, front foot about two feet ahead.',
@@ -103,6 +113,8 @@ export const PROGRAM: TrainingDay[] = [
           'Finish all reps on one leg before switching.',
         ],
         upgrade: 'This is the main squat driver without a barbell — one leg at a time means your 32 kg dumbbells load the working leg as hard as far heavier bilateral work would.',
+        formUrl: 'https://exrx.net/WeightExercises/Quadriceps/BWSingleLegSplitSquat',
+        formUrlExact: false,
       },
       {
         id: 'db-rdl',
@@ -115,6 +127,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 105,
         loadPerBw: 0.35,
         loadNote: 'per dumbbell',
+        position: 'Standing, feet hip-width apart',
         cue: 'Hips back, dumbbells close, feel the stretch behind the thigh.',
         form: [
           'Hold a dumbbell in each hand in front of your thighs, knees softly bent.',
@@ -122,6 +135,8 @@ export const PROGRAM: TrainingDay[] = [
           'Stop when you feel a strong hamstring stretch, usually around mid-shin.',
           'Drive your hips forward to stand. Squeeze the glutes at the top, do not lean back.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/Hamstrings/DBStrBackStrLegDeadlift',
+        formUrlExact: true,
       },
       {
         id: 'db-hip-thrust',
@@ -133,6 +148,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 90,
         loadPerBw: 0.4,
         loadNote: 'one dumbbell across the hips',
+        position: 'Sitting on the floor, upper back against the bench',
         cue: 'Tuck the chin, ribs down, squeeze hard at the top.',
         form: [
           'Upper back against the bench, feet flat and about shoulder-width.',
@@ -140,6 +156,8 @@ export const PROGRAM: TrainingDay[] = [
           'Drive the hips up until your torso is parallel to the floor.',
           'Hold one second at the top, lower under control.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/GluteusMaximus/BBHipThrust',
+        formUrlExact: false,
       },
       {
         id: 'nordic-curl',
@@ -150,6 +168,7 @@ export const PROGRAM: TrainingDay[] = [
         reps: '10–15',
         restSec: 75,
         loadNote: 'band tension',
+        position: 'Lying face down, or standing',
         cue: 'Slow on the way back, 3 seconds.',
         form: [
           'Anchor the band low behind you and loop it around one ankle.',
@@ -157,6 +176,8 @@ export const PROGRAM: TrainingDay[] = [
           'Control the return slowly — the lengthening half is where hamstrings grow.',
         ],
         upgrade: 'A substitute for the leg curl machine. Hamstrings also get direct work from the RDL, so this is supplementary rather than critical.',
+        formUrl: 'https://exrx.net/WeightExercises/Hamstrings/ASInverseLegCurlBands',
+        formUrlExact: true,
       },
       {
         id: 'calf-raise',
@@ -168,12 +189,15 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 60,
         loadPerBw: 0.25,
         loadNote: 'one dumbbell, held at your side',
+        position: 'Standing on one foot on a step or book',
         cue: 'Full range: deep stretch at the bottom, pause at the top.',
         form: [
           'Stand on one foot with the ball of the foot on a step or book, dumbbell in the same-side hand.',
           'Drop the heel below the step for a full stretch.',
           'Rise to the tallest position and hold one second.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/Gastrocnemius/DBSingleLegCalfRaise',
+        formUrlExact: true,
       },
       {
         id: 'plank',
@@ -184,8 +208,11 @@ export const PROGRAM: TrainingDay[] = [
         sets: 3,
         reps: '30–60 sec',
         restSec: 60,
+        position: 'Face down, propped on forearms and toes',
         cue: 'Squeeze glutes — that is what stops the hips sagging.',
         form: ['Elbows under shoulders.', 'Body in one line from head to heels.', 'Brace as if about to take a punch.'],
+        formUrl: 'https://exrx.net/WeightExercises/RectusAbdominis/BWFrontPlank',
+        formUrlExact: true,
       },
     ],
   },
@@ -208,6 +235,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 120,
         loadPerBw: 0.3,
         loadNote: 'per dumbbell',
+        position: 'Lying on your back on the bench',
         cue: 'Shoulder blades pulled back and down into the bench.',
         form: [
           'Lie back with the dumbbells at chest level, elbows about 45° from your torso — not flared to 90°.',
@@ -215,6 +243,8 @@ export const PROGRAM: TrainingDay[] = [
           'Lower under control until you feel a stretch across the chest.',
           'To get heavy dumbbells into position, rest them on your knees and kick back as you lie down.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/PectoralSternal/DBBenchPress',
+        formUrlExact: true,
       },
       {
         id: 'db-row',
@@ -226,6 +256,7 @@ export const PROGRAM: TrainingDay[] = [
         reps: '10–12 per arm',
         restSec: 90,
         loadPerBw: 0.35,
+        position: 'One knee and hand on the bench, other foot on the floor',
         cue: 'Pull with the elbow, not the hand.',
         form: [
           'One knee and hand on the bench, back flat and roughly parallel to the floor.',
@@ -234,6 +265,8 @@ export const PROGRAM: TrainingDay[] = [
           'Lower all the way down for a full stretch.',
         ],
         upgrade: 'Your heaviest back exercise. Without a pull-up bar this carries most of the back work, so treat it as a main lift, not an accessory.',
+        formUrl: 'https://exrx.net/WeightExercises/BackGeneral/DBBentOverRow',
+        formUrlExact: true,
       },
       {
         id: 'band-pulldown',
@@ -244,6 +277,7 @@ export const PROGRAM: TrainingDay[] = [
         reps: '12–20',
         restSec: 75,
         loadNote: 'band tension',
+        position: 'Kneeling, facing the anchor point',
         cue: 'Drive the elbows down toward your ribs.',
         form: [
           'Anchor the band high — a door anchor, or over a solid beam.',
@@ -252,6 +286,8 @@ export const PROGRAM: TrainingDay[] = [
           'Control the return until the arms are fully extended overhead.',
         ],
         upgrade: 'A stand-in for vertical pulling. A pull-up bar would replace this outright — bands lose tension exactly where your lats are strongest, so this is the weakest exercise in the programme.',
+        formUrl: 'https://exrx.net/WeightExercises/LatissimusDorsi/CBFrontPulldown',
+        formUrlExact: false,
       },
       {
         id: 'db-shoulder-press',
@@ -263,12 +299,15 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 90,
         loadPerBw: 0.18,
         loadNote: 'per dumbbell',
+        position: 'Sitting upright on the bench',
         cue: 'Do not let the lower back arch off the bench.',
         form: [
           'Set the bench upright, dumbbells at ear height, palms forward.',
           'Press up until the arms are nearly straight.',
           'Lower under control to ear height.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/DeltoidAnterior/DBShoulderPress',
+        formUrlExact: false,
       },
       {
         id: 'lateral-raise',
@@ -281,12 +320,15 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 60,
         loadPerBw: 0.07,
         loadNote: 'per dumbbell — lighter than you think',
+        position: 'Standing, dumbbells at your sides',
         cue: 'Lead with the elbows, stop at shoulder height.',
         form: [
           'Slight bend in the elbows, held throughout.',
           'Raise out to the sides to shoulder height, no higher.',
           'Lower slowly, 2 seconds.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/DeltoidLateral/DBLateralRaise',
+        formUrlExact: true,
       },
       {
         id: 'band-face-pull',
@@ -297,6 +339,7 @@ export const PROGRAM: TrainingDay[] = [
         reps: '15–20',
         restSec: 60,
         loadNote: 'band tension — light',
+        position: 'Standing, facing the anchor point',
         cue: 'Pull toward your forehead, ending in a double-bicep pose.',
         form: [
           'Anchor the band at upper-chest height.',
@@ -304,6 +347,8 @@ export const PROGRAM: TrainingDay[] = [
           'The external rotation at the end is the whole point.',
         ],
         upgrade: 'Bands are genuinely better than cables here — tension rises as you pull, matching where the movement gets easier.',
+        formUrl: 'https://exrx.net/WeightExercises/DeltoidPosterior/CBStandingRearDeltRowRope',
+        formUrlExact: false,
       },
     ],
   },
@@ -341,6 +386,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 120,
         loadPerBw: 0.4,
         loadNote: 'per dumbbell',
+        position: 'Standing, feet hip-width apart',
         cue: 'Push the floor away rather than pulling the weight up.',
         form: [
           'Stand with a dumbbell outside each foot, feet hip-width.',
@@ -349,6 +395,8 @@ export const PROGRAM: TrainingDay[] = [
           'Drive through the floor, standing up in one piece. Hips and shoulders rise together.',
           'Lower under control. Do not round your back to save a rep.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/Quadriceps/DBSquat',
+        formUrlExact: false,
       },
       {
         id: 'single-leg-rdl',
@@ -360,6 +408,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 90,
         loadPerBw: 0.22,
         loadNote: 'per dumbbell',
+        position: 'Standing on one leg',
         cue: 'Hips square to the floor — do not let the free hip rotate open.',
         form: [
           'Stand on one leg, dumbbell in the opposite hand.',
@@ -368,6 +417,8 @@ export const PROGRAM: TrainingDay[] = [
           'Return by driving the standing hip forward.',
         ],
         upgrade: 'Loads one hamstring at a time, so 32 kg dumbbells stay challenging long after bilateral RDLs get light.',
+        formUrl: 'https://exrx.net/WeightExercises/GluteusMaximus/BWSingleLegStiffLegDeadlift',
+        formUrlExact: false,
       },
       {
         id: 'db-step-up',
@@ -379,12 +430,15 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 90,
         loadPerBw: 0.2,
         loadNote: 'per dumbbell',
+        position: 'Standing in front of the bench',
         cue: 'Drive through the top foot — do not push off the bottom one.',
         form: [
           'Dumbbell in each hand, one foot flat on the bench.',
           'Step up by driving through the bench foot, standing tall at the top.',
           'Lower under control, tapping the floor lightly before the next rep.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/Quadriceps/DBStepUp',
+        formUrlExact: true,
       },
       {
         id: 'db-sumo-squat',
@@ -396,12 +450,15 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 75,
         loadPerBw: 0.4,
         loadNote: 'one dumbbell, held between the legs',
+        position: 'Standing, wide stance',
         cue: 'Toes turned out about 30°, knees tracking over them.',
         form: [
           'Wide stance, one dumbbell hanging between your legs.',
           'Squat straight down, keeping the torso upright.',
           'Drive up through the heels, squeezing the glutes at the top.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/Quadriceps/DBSquat',
+        formUrlExact: false,
       },
       {
         id: 'lying-leg-raise',
@@ -411,6 +468,7 @@ export const PROGRAM: TrainingDay[] = [
         sets: 3,
         reps: '12–15',
         restSec: 60,
+        position: 'Lying on your back',
         cue: 'Curl the pelvis up — do not just swing the legs.',
         form: [
           'Lie on your back, hands under your lower back or gripping something behind your head.',
@@ -418,6 +476,8 @@ export const PROGRAM: TrainingDay[] = [
           'Lower slowly without letting the lower back arch away from the floor.',
         ],
         upgrade: 'A pull-up bar would let you do hanging knee raises, which load the abs considerably harder.',
+        formUrl: 'https://exrx.net/WeightExercises/HipFlexors/BWLyingLegRaiseFloor',
+        formUrlExact: true,
       },
     ],
   },
@@ -440,6 +500,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 120,
         loadPerBw: 0.16,
         loadNote: 'per dumbbell',
+        position: 'Standing, feet hip-width apart',
         cue: 'Squeeze the glutes so the press does not become a lean-back.',
         form: [
           'Dumbbells at shoulder height, palms forward, feet hip-width.',
@@ -448,6 +509,8 @@ export const PROGRAM: TrainingDay[] = [
           'Lower under control to shoulder height.',
         ],
         swap: 'Seated on the upright bench if your lower back rounds.',
+        formUrl: 'https://exrx.net/WeightExercises/DeltoidAnterior/DBShoulderPress',
+        formUrlExact: false,
       },
       {
         id: 'db-pullover',
@@ -459,6 +522,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 90,
         loadPerBw: 0.25,
         loadNote: 'one dumbbell, held with both hands',
+        position: 'Lying on your back on the bench',
         cue: 'Keep the elbows slightly bent and fixed — the movement is at the shoulder.',
         form: [
           'Lie on the bench holding one dumbbell over your chest, both hands cupping the top head.',
@@ -466,6 +530,8 @@ export const PROGRAM: TrainingDay[] = [
           'Pull it back over your chest using your lats, not your arms.',
         ],
         upgrade: 'The best lat exercise available without a bar, since it loads them in a stretched position. A pull-up would still beat it.',
+        formUrl: 'https://exrx.net/WeightExercises/PectoralSternal/DBPullover',
+        formUrlExact: true,
       },
       {
         id: 'incline-db-press',
@@ -477,12 +543,15 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 90,
         loadPerBw: 0.24,
         loadNote: 'per dumbbell',
+        position: 'Lying back on an inclined bench',
         cue: 'Bench at 30°, not 45° — higher shifts the work to the shoulders.',
         form: [
           'Set the bench to the second or third notch, dumbbells at upper-chest level.',
           'Press up and slightly together.',
           'Lower until you feel the stretch across the upper chest.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/PectoralClavicular/DBInclineBenchPress',
+        formUrlExact: true,
       },
       {
         id: 'chest-supported-row',
@@ -494,6 +563,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 90,
         loadPerBw: 0.2,
         loadNote: 'per dumbbell',
+        position: 'Lying face down on an inclined bench',
         cue: 'Chest stays glued to the bench — that is what removes the cheating.',
         form: [
           'Set the bench to about 30° incline and lie face down on it.',
@@ -502,6 +572,8 @@ export const PROGRAM: TrainingDay[] = [
           'Lower fully to a complete stretch.',
         ],
         upgrade: 'Replaces the seated cable row. Removing your legs and lower back from the movement means the back does all the work.',
+        formUrl: 'https://exrx.net/WeightExercises/BackGeneral/DBLyingRow',
+        formUrlExact: true,
       },
       {
         id: 'db-curl',
@@ -513,12 +585,15 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 60,
         loadPerBw: 0.12,
         loadNote: 'per dumbbell',
+        position: 'Sitting back on an inclined bench',
         cue: 'Elbows stay behind the torso — that stretch is the point.',
         form: [
           'Sit back on a 45° incline, arms hanging straight down.',
           'Curl without letting the elbows drift forward.',
           'Lower fully to a dead hang.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/Biceps/DBInclineCurl',
+        formUrlExact: true,
       },
       {
         id: 'db-skullcrusher',
@@ -530,6 +605,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 60,
         loadPerBw: 0.1,
         loadNote: 'per dumbbell',
+        position: 'Lying on your back on a flat bench',
         cue: 'Elbows point at the ceiling and stay there.',
         form: [
           'Lie on the flat bench, dumbbells over your chest, palms facing each other.',
@@ -537,6 +613,8 @@ export const PROGRAM: TrainingDay[] = [
           'Extend back up without letting the upper arms drift.',
         ],
         upgrade: 'Replaces the cable pushdown. Loads the triceps in a stretched position, which cables do not.',
+        formUrl: 'https://exrx.net/WeightExercises/Triceps/DBLyingTriExt',
+        formUrlExact: true,
       },
     ],
   },

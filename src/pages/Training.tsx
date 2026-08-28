@@ -9,7 +9,7 @@ import {
 import { GOAL_ADJUSTMENT } from '@/lib/nutrition'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { PatternFigure, MuscleMap, patternFor } from '@/components/illustrations/ExerciseDiagram'
+import { PatternFigure, MuscleMap, patternFor, PATTERN_LABEL } from '@/components/illustrations/ExerciseDiagram'
 import { cn } from '@/lib/utils'
 
 const EQUIPMENT_LABEL: Record<Equipment, string> = {
@@ -217,13 +217,17 @@ function ExerciseCard({
   const [open, setOpen] = useState(false)
   const load = resolveLoad(ex, weightKg)
   const sets = adjustedSets(ex, goal)
+  const pattern = patternFor(ex.id)
 
   return (
     <Card>
       <CardContent className="pt-5">
         <div className="flex gap-4">
-          <div className="hidden shrink-0 sm:block">
-            <PatternFigure pattern={patternFor(ex.id)} size={80} />
+          <div className="hidden shrink-0 flex-col items-center gap-1 sm:flex">
+            <PatternFigure pattern={pattern} size={80} />
+            <span className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+              {PATTERN_LABEL[pattern]}
+            </span>
           </div>
 
           <div className="min-w-0 flex-1">
@@ -231,6 +235,12 @@ function ExerciseCard({
               <h3 className="font-semibold">{ex.name}</h3>
               {ex.chinese && <span className="text-xs text-muted-foreground">{ex.chinese}</span>}
             </div>
+
+            <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:hidden">
+              <Badge tone="outline">{PATTERN_LABEL[pattern]}</Badge>
+            </div>
+
+            <p className="mt-1.5 text-sm text-muted-foreground">{ex.position}</p>
 
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {ex.equipment.map((e) => (
@@ -264,13 +274,29 @@ function ExerciseCard({
 
             <p className="mt-2 text-sm text-muted-foreground italic">{ex.cue}</p>
 
-            <button
-              onClick={() => setOpen(!open)}
-              className="mt-2 flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-            >
-              <ChevronDown size={13} className={cn('transition-transform', open && 'rotate-180')} />
-              {open ? 'Hide form' : 'Show form breakdown'}
-            </button>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => setOpen(!open)}
+                className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                <ChevronDown size={13} className={cn('transition-transform', open && 'rotate-180')} />
+                {open ? 'Hide form' : 'Show form breakdown'}
+              </button>
+              <a
+                href={ex.formUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                <ArrowUpRight size={13} />
+                Watch form on ExRx
+              </a>
+            </div>
+            {!ex.formUrlExact && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                ExRx doesn't have this exact variant — the link shows the closest equivalent movement.
+              </p>
+            )}
           </div>
 
           <div className="hidden shrink-0 lg:block">

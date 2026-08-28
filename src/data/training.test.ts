@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   MUSCLE_GROUPS, CARDIO_SESSIONS, GOAL_TRAINING, ACTIVITY_CARDIO, DUMBBELL_MAX_KG, DUMBBELL_STEP_KG,
-  resolveLoad, adjustedSets, type Exercise,
+  resolveLoad, adjustedSets, estimatedMinutes, type Exercise, type MuscleGroup,
 } from './training'
 
 const ex = (over: Partial<Exercise> = {}): Exercise => ({
@@ -39,6 +39,11 @@ describe('muscle group sections', () => {
     }
   })
 
+  it('has exactly one section per muscle group, with no duplicates or gaps', () => {
+    const expected: MuscleGroup[] = ['chest', 'back', 'shoulders', 'legs', 'biceps', 'triceps', 'core']
+    expect(MUSCLE_GROUPS.map((g) => g.id).sort()).toEqual([...expected].sort())
+  })
+
   it('only lists an exercise under the section matching its group', () => {
     for (const g of MUSCLE_GROUPS) {
       expect(g.exercises.every((e) => e.group === g.id)).toBe(true)
@@ -60,9 +65,9 @@ describe('muscle group sections', () => {
 })
 
 describe('cardio sessions', () => {
-  it('has at least one session with a positive duration', () => {
-    expect(CARDIO_SESSIONS.length).toBeGreaterThan(0)
-    expect(CARDIO_SESSIONS.every((c) => c.minutes > 0)).toBe(true)
+  it('has exactly two sessions, each with a positive duration and a short label', () => {
+    expect(CARDIO_SESSIONS).toHaveLength(2)
+    expect(CARDIO_SESSIONS.every((c) => c.minutes > 0 && c.what.trim())).toBe(true)
   })
 })
 
@@ -113,11 +118,24 @@ describe('adjustedSets', () => {
   })
 
   it('changes total session volume when the goal changes', () => {
-    const group = MUSCLE_GROUPS[0]
+    const group = MUSCLE_GROUPS.find((g) => g.id === 'chest')!
     const total = (g: Parameters<typeof adjustedSets>[1]) =>
       group.exercises.reduce((a, e) => a + adjustedSets(e, g), 0)
     expect(total('cut')).toBeLessThan(total('recomp'))
     expect(total('lean-bulk')).toBeGreaterThan(total('recomp'))
+  })
+})
+
+describe('estimatedMinutes', () => {
+  it('grows with more sets and shrinks with less', () => {
+    const group = MUSCLE_GROUPS.find((g) => g.id === 'chest')!
+    expect(estimatedMinutes(group.exercises, 'lean-bulk')).toBeGreaterThan(
+      estimatedMinutes(group.exercises, 'cut'),
+    )
+  })
+
+  it('returns zero for an empty exercise list', () => {
+    expect(estimatedMinutes([], 'recomp')).toBe(0)
   })
 })
 

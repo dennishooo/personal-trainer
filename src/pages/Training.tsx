@@ -3,7 +3,7 @@ import { Timer, Repeat, ChevronDown, AlertTriangle, ArrowUpRight } from 'lucide-
 import { usePlan } from '@/stores/profile'
 import {
   MUSCLE_GROUPS, CARDIO_SESSIONS, PROGRESSION_RULES, WARMUP, GOAL_TRAINING, ACTIVITY_CARDIO, PULLUP_BAR_UPGRADES,
-  DUMBBELL_MAX_KG, resolveLoad, adjustedSets,
+  DUMBBELL_MAX_KG, resolveLoad, adjustedSets, estimatedMinutes,
   type MuscleGroupSection, type Exercise, type Equipment,
 } from '@/data/training'
 import { GOAL_ADJUSTMENT } from '@/lib/nutrition'
@@ -114,6 +114,7 @@ export function Training() {
           <Card key={c.id}>
             <CardHeader>
               <CardTitle>{c.name}</CardTitle>
+              <CardDescription>{c.what}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-5 sm:flex-row">
               <PatternFigure pattern="run" size={90} />
@@ -184,6 +185,7 @@ function MuscleGroupSectionCard({
   goal: Parameters<typeof adjustedSets>[1]
 }) {
   const totalSets = group.exercises.reduce((a, e) => a + adjustedSets(e, goal), 0)
+  const minutes = estimatedMinutes(group.exercises, goal)
 
   return (
     <div id={`group-${group.id}`} className="space-y-3 scroll-mt-4">
@@ -194,7 +196,7 @@ function MuscleGroupSectionCard({
             <Badge tone="primary">{group.focus}</Badge>
           </div>
           <CardDescription>
-            {group.exercises.length} exercises · {totalSets} working sets
+            {group.exercises.length} exercises · {totalSets} working sets · about {minutes} minutes
           </CardDescription>
         </CardHeader>
       </Card>

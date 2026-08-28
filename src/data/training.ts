@@ -41,6 +41,8 @@ export interface MuscleGroupSection {
 export interface CardioSession {
   id: string
   name: string
+  /** Short at-a-glance label, e.g. "Easy jog". */
+  what: string
   detail: string
   minutes: number
 }
@@ -594,6 +596,7 @@ export const CARDIO_SESSIONS: CardioSession[] = [
   {
     id: 'zone-2',
     name: 'Zone 2 run',
+    what: 'Easy jog',
     detail:
       'Conversational pace — you should be able to speak in full sentences. If you cannot, slow down. Most people run their easy days too hard and their hard days too easy.',
     minutes: 40,
@@ -601,8 +604,9 @@ export const CARDIO_SESSIONS: CardioSession[] = [
   {
     id: 'intervals',
     name: 'Intervals or long run',
+    what: 'Alternate weekly',
     detail:
-      'Alternate weekly. Week A — intervals: 10 min easy warm-up, then 6 × (1 min hard / 2 min easy), 8 min cool-down. Week B — long run: 50–60 min at conversational pace. Alternating keeps the aerobic base growing without piling fatigue onto your leg days.',
+      'Week A — intervals: 10 min easy warm-up, then 6 × (1 min hard / 2 min easy), 8 min cool-down. Week B — long run: 50–60 min at conversational pace. Alternating keeps the aerobic base growing without piling fatigue onto your leg days.',
     minutes: 35,
   },
 ]
@@ -673,6 +677,18 @@ export function resolveLoad(
 /** Apply the goal's volume adjustment, never dropping below two working sets. */
 export function adjustedSets(ex: Exercise, goal: Goal): number {
   return Math.max(2, ex.sets + GOAL_TRAINING[goal].setDelta)
+}
+
+/** Seconds a working set itself takes, before rest — a rough estimate used only for session-length guidance. */
+const SET_DURATION_SEC = 40
+
+/** Rough time to work through a group of exercises: each set's rest plus a flat working-set estimate. */
+export function estimatedMinutes(exercises: Exercise[], goal: Goal): number {
+  const totalSeconds = exercises.reduce((a, ex) => {
+    const sets = adjustedSets(ex, goal)
+    return a + sets * (SET_DURATION_SEC + ex.restSec)
+  }, 0)
+  return Math.round(totalSeconds / 60)
 }
 
 export const PROGRESSION_RULES = [

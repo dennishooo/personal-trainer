@@ -2,10 +2,8 @@ import { useMemo } from 'react'
 import { ShoppingBasket, CalendarDays } from 'lucide-react'
 import { usePlan } from '@/stores/profile'
 import { RECIPES, scaleAmount, scaleMacros, type Recipe } from '@/data/meals'
-import { PROGRAM } from '@/data/training'
 import { ageFrom, macroTargets } from '@/lib/nutrition'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -32,7 +30,6 @@ function buildWeek(favourites: string[]) {
     breakfast: breakfasts[i % breakfasts.length],
     lunch: lunches[i % lunches.length],
     dinner: dinners[i % dinners.length],
-    training: PROGRAM[i],
   }))
 }
 
@@ -63,8 +60,8 @@ export function Week() {
       <header>
         <h1 className="text-2xl font-bold tracking-tight">Your week</h1>
         <p className="text-sm text-muted-foreground">
-          A full seven days of meals and training. Star meals on the Meals page and they move to the
-          front of the rotation.
+          A full seven days of meals. Star meals on the Meals page and they move to the front of the
+          rotation.
         </p>
       </header>
 
@@ -80,14 +77,9 @@ export function Week() {
           return (
             <Card key={d.day}>
               <CardHeader>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <CardTitle className="flex items-center gap-2">
-                    <CalendarDays size={15} /> {d.day}
-                  </CardTitle>
-                  <Badge tone={d.training.type === 'lift' ? 'primary' : d.training.type === 'cardio' ? 'default' : 'outline'}>
-                    {d.training.name}
-                  </Badge>
-                </div>
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarDays size={15} /> {d.day}
+                </CardTitle>
                 <CardDescription className={cn(over && 'text-[var(--warning)]')}>
                   ~{total} kcal · {protein} g protein · target {targets.calories} kcal / {targets.proteinG} g
                 </CardDescription>

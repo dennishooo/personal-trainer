@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Dumbbell, Timer, Repeat, Footprints, Moon, ChevronDown, AlertTriangle, ArrowUpRight } from 'lucide-react'
+import { Timer, Repeat, ChevronDown, AlertTriangle, ArrowUpRight } from 'lucide-react'
 import { usePlan } from '@/stores/profile'
 import {
-  PROGRAM, PROGRESSION_RULES, WARMUP, GOAL_TRAINING, ACTIVITY_CARDIO, PULLUP_BAR_UPGRADES,
+  MUSCLE_GROUPS, CARDIO_SESSIONS, PROGRESSION_RULES, WARMUP, GOAL_TRAINING, ACTIVITY_CARDIO, PULLUP_BAR_UPGRADES,
   DUMBBELL_MAX_KG, resolveLoad, adjustedSets,
-  type TrainingDay, type Exercise, type Equipment,
+  type MuscleGroupSection, type Exercise, type Equipment,
 } from '@/data/training'
 import { GOAL_ADJUSTMENT } from '@/lib/nutrition'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,8 +22,6 @@ const EQUIPMENT_LABEL: Record<Equipment, string> = {
 
 export function Training() {
   const { profile } = usePlan()
-  const [active, setActive] = useState(PROGRAM[0].id)
-  const day = PROGRAM.find((d) => d.id === active)!
 
   const goalTraining = GOAL_TRAINING[profile.goal]
   const cardio = ACTIVITY_CARDIO[profile.activity]
@@ -33,8 +31,9 @@ export function Training() {
       <header>
         <h1 className="text-2xl font-bold tracking-tight">Training</h1>
         <p className="text-sm text-muted-foreground">
-          Built for dumbbells, a bench and bands — nothing here needs a gym. Loads are estimated from
-          your {profile.weightKg.toFixed(1)} kg; treat them as a first guess and adjust on feel.
+          Built for dumbbells, a bench and bands — nothing here needs a gym. Exercises are grouped by
+          muscle so you can pick what to train each session. Loads are estimated from your{' '}
+          {profile.weightKg.toFixed(1)} kg; treat them as a first guess and adjust on feel.
         </p>
       </header>
 
@@ -70,45 +69,64 @@ export function Training() {
         </CardContent>
       </Card>
 
-      {/* ── Week strip ── */}
+      {/* ── Jump to a muscle group ── */}
       <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-        {PROGRAM.map((d) => (
-          <button
-            key={d.id}
-            onClick={() => setActive(d.id)}
-            className={cn(
-              'flex min-w-24 shrink-0 flex-col items-start rounded-xl border p-3 text-left transition-colors',
-              active === d.id ? 'border-primary bg-accent' : 'border-border bg-card hover:border-primary/40',
-            )}
+        {MUSCLE_GROUPS.map((g) => (
+          <a
+            key={g.id}
+            href={`#group-${g.id}`}
+            className="shrink-0 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-accent"
           >
-            <span className="text-[10px] tracking-wide text-muted-foreground uppercase">Day {d.day}</span>
-            <span className="mt-0.5 text-sm font-semibold">{d.name}</span>
-            <span className="mt-1.5 text-muted-foreground">
-              {d.type === 'lift' ? <Dumbbell size={14} /> : d.type === 'cardio' ? <Footprints size={14} /> : <Moon size={14} />}
-            </span>
-          </button>
+            {g.name}
+          </a>
         ))}
+        <a
+          href="#cardio"
+          className="shrink-0 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-accent"
+        >
+          Cardio
+        </a>
       </div>
 
-      <DayDetail day={day} weightKg={profile.weightKg} goal={profile.goal} />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Warm-up — 8 minutes, before any session</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ol className="space-y-1.5 text-sm">
+            {WARMUP.map((w, i) => (
+              <li key={i} className="flex gap-2.5">
+                <span className="text-muted-foreground tabular-nums">{i + 1}.</span>
+                <span>{w}</span>
+              </li>
+            ))}
+          </ol>
+        </CardContent>
+      </Card>
 
-      {day.type === 'lift' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Warm-up — 8 minutes, every session</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ol className="space-y-1.5 text-sm">
-              {WARMUP.map((w, i) => (
-                <li key={i} className="flex gap-2.5">
-                  <span className="text-muted-foreground tabular-nums">{i + 1}.</span>
-                  <span>{w}</span>
-                </li>
-              ))}
-            </ol>
-          </CardContent>
-        </Card>
-      )}
+      {MUSCLE_GROUPS.map((g) => (
+        <MuscleGroupSectionCard key={g.id} group={g} weightKg={profile.weightKg} goal={profile.goal} />
+      ))}
+
+      <div id="cardio" className="space-y-3 scroll-mt-4">
+        <h2 className="text-lg font-bold tracking-tight">Cardio</h2>
+        {CARDIO_SESSIONS.map((c) => (
+          <Card key={c.id}>
+            <CardHeader>
+              <CardTitle>{c.name}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center gap-5 sm:flex-row">
+              <PatternFigure pattern="run" size={90} />
+              <div className="flex-1">
+                <p className="text-sm leading-relaxed">{c.detail}</p>
+                <div className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Timer size={14} /> About {c.minutes} minutes
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {/* ── The one real gap in the setup ── */}
       <Card className="border-[var(--warning)]/40 bg-[var(--warning)]/5">
@@ -158,49 +176,30 @@ export function Training() {
   )
 }
 
-function DayDetail({ day, weightKg, goal }: { day: TrainingDay; weightKg: number; goal: Parameters<typeof adjustedSets>[1] }) {
-  if (day.type !== 'lift') {
-    return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CardTitle>{day.name}</CardTitle>
-            <Badge tone="outline">{day.focus}</Badge>
-          </div>
-          <CardDescription>{day.cardio?.what}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center gap-5 sm:flex-row">
-          <PatternFigure pattern={day.type === 'cardio' ? 'run' : 'core'} size={110} />
-          <div className="flex-1">
-            <p className="text-sm leading-relaxed">{day.cardio?.detail}</p>
-            {day.durationMin > 0 && (
-              <div className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Timer size={14} /> About {day.durationMin} minutes
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  const totalSets = day.exercises.reduce((a, e) => a + adjustedSets(e, goal), 0)
+function MuscleGroupSectionCard({
+  group, weightKg, goal,
+}: {
+  group: MuscleGroupSection
+  weightKg: number
+  goal: Parameters<typeof adjustedSets>[1]
+}) {
+  const totalSets = group.exercises.reduce((a, e) => a + adjustedSets(e, goal), 0)
 
   return (
-    <div className="space-y-3">
+    <div id={`group-${group.id}`} className="space-y-3 scroll-mt-4">
       <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center gap-2">
-            <CardTitle>{day.name}</CardTitle>
-            <Badge tone="primary">{day.focus}</Badge>
+            <CardTitle>{group.name}</CardTitle>
+            <Badge tone="primary">{group.focus}</Badge>
           </div>
           <CardDescription>
-            {day.exercises.length} exercises · {totalSets} working sets · about {day.durationMin} minutes
+            {group.exercises.length} exercises · {totalSets} working sets
           </CardDescription>
         </CardHeader>
       </Card>
 
-      {day.exercises.map((ex) => (
+      {group.exercises.map((ex) => (
         <ExerciseCard key={ex.id} ex={ex} weightKg={weightKg} goal={goal} />
       ))}
     </div>

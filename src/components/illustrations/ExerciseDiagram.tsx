@@ -159,8 +159,11 @@ export function EquipmentIcon({ id, size = 20 }: { id: string; size?: number }) 
  */
 export function MuscleMap({ groups, size = 84 }: { groups: MuscleGroup[]; size?: number }) {
   const lit = (g: MuscleGroup) => groups.includes(g) || groups.includes('full')
+  const litArms = () => lit('biceps') || lit('triceps')
   const fill = (g: MuscleGroup) => (lit(g) ? 'var(--primary)' : 'var(--muted-foreground)')
   const op = (g: MuscleGroup) => (lit(g) ? 0.9 : 0.25)
+  const fillArms = () => (litArms() ? 'var(--primary)' : 'var(--muted-foreground)')
+  const opArms = () => (litArms() ? 0.9 : 0.25)
 
   return (
     <svg
@@ -180,8 +183,8 @@ export function MuscleMap({ groups, size = 84 }: { groups: MuscleGroup[]; size?:
       {/* upper back */}
       <rect x="8" y="13.4" width="8" height="4.4" rx="1.8" fill={fill('back')} opacity={op('back')} />
       {/* arms */}
-      <rect x="3.6" y="12.5" width="2.8" height="7.5" rx="1.4" fill={fill('arms')} opacity={op('arms')} />
-      <rect x="17.6" y="12.5" width="2.8" height="7.5" rx="1.4" fill={fill('arms')} opacity={op('arms')} />
+      <rect x="3.6" y="12.5" width="2.8" height="7.5" rx="1.4" fill={fillArms()} opacity={opArms()} />
+      <rect x="17.6" y="12.5" width="2.8" height="7.5" rx="1.4" fill={fillArms()} opacity={opArms()} />
       {/* core */}
       <rect x="8.6" y="18" width="6.8" height="5.6" rx="1.8" fill={fill('core')} opacity={op('core')} />
       {/* legs */}

@@ -1,6 +1,6 @@
 import type { Goal } from '@/lib/nutrition'
 
-export type MuscleGroup = 'chest' | 'back' | 'legs' | 'shoulders' | 'arms' | 'core' | 'full'
+export type MuscleGroup = 'chest' | 'back' | 'legs' | 'shoulders' | 'biceps' | 'triceps' | 'core' | 'full'
 export type Equipment = 'dumbbell' | 'bench' | 'band' | 'bodyweight' | 'pullup-bar'
 
 export interface Exercise {
@@ -31,15 +31,18 @@ export interface Exercise {
   formUrlExact: boolean
 }
 
-export interface TrainingDay {
-  id: string
-  day: number
+export interface MuscleGroupSection {
+  id: MuscleGroup
   name: string
   focus: string
-  type: 'lift' | 'cardio' | 'rest'
-  durationMin: number
   exercises: Exercise[]
-  cardio?: { what: string; detail: string; minutes: number }
+}
+
+export interface CardioSession {
+  id: string
+  name: string
+  detail: string
+  minutes: number
 }
 
 /** Per-dumbbell ceiling. The NÜOBELL 232 tops out at 32 kg in 2 kg steps. */
@@ -47,10 +50,10 @@ export const DUMBBELL_MAX_KG = 32
 export const DUMBBELL_STEP_KG = 2
 
 /**
- * A 4-day upper/lower split built entirely around adjustable dumbbells, an
- * adjustable bench and resistance bands. Upper/lower hits each muscle twice a
- * week, which beats a once-weekly split for someone rebuilding after a layoff —
- * frequency drives adaptation more than per-session volume.
+ * Exercises grouped by the muscle they target rather than assigned to a
+ * fixed weekly schedule — pick whichever group to train each session. Built
+ * entirely around adjustable dumbbells, an adjustable bench and resistance
+ * bands.
  *
  * Two constraints shape the exercise selection:
  *
@@ -61,16 +64,8 @@ export const DUMBBELL_STEP_KG = 2
  *    a dumbbell-only setup. Band pulldowns and pullovers partially cover it;
  *    exercises carrying an `upgrade` note say what a bar would improve.
  */
-export const PROGRAM: TrainingDay[] = [
+const ALL_EXERCISES: Exercise[] = [
   {
-    id: 'day-1',
-    day: 1,
-    name: 'Lower A',
-    focus: 'Squat pattern, quads and glutes',
-    type: 'lift',
-    durationMin: 50,
-    exercises: [
-      {
         id: 'goblet-squat',
         name: 'Goblet squat',
         chinese: '高腳杯深蹲',
@@ -214,16 +209,6 @@ export const PROGRAM: TrainingDay[] = [
         formUrl: 'https://exrx.net/WeightExercises/RectusAbdominis/BWFrontPlank',
         formUrlExact: true,
       },
-    ],
-  },
-  {
-    id: 'day-2',
-    day: 2,
-    name: 'Upper A',
-    focus: 'Horizontal push and pull',
-    type: 'lift',
-    durationMin: 50,
-    exercises: [
       {
         id: 'db-bench',
         name: 'Dumbbell bench press',
@@ -350,31 +335,6 @@ export const PROGRAM: TrainingDay[] = [
         formUrl: 'https://exrx.net/WeightExercises/DeltoidPosterior/CBStandingRearDeltRowRope',
         formUrlExact: false,
       },
-    ],
-  },
-  {
-    id: 'day-3',
-    day: 3,
-    name: 'Zone 2 run',
-    focus: 'Aerobic base',
-    type: 'cardio',
-    durationMin: 40,
-    exercises: [],
-    cardio: {
-      what: 'Easy jog',
-      detail:
-        'Conversational pace — you should be able to speak in full sentences. If you cannot, slow down. Most people run their easy days too hard and their hard days too easy.',
-      minutes: 40,
-    },
-  },
-  {
-    id: 'day-4',
-    day: 4,
-    name: 'Lower B',
-    focus: 'Hinge pattern, hamstrings and glutes',
-    type: 'lift',
-    durationMin: 50,
-    exercises: [
       {
         id: 'db-deadlift',
         name: 'Dumbbell deadlift',
@@ -479,16 +439,6 @@ export const PROGRAM: TrainingDay[] = [
         formUrl: 'https://exrx.net/WeightExercises/HipFlexors/BWLyingLegRaiseFloor',
         formUrlExact: true,
       },
-    ],
-  },
-  {
-    id: 'day-5',
-    day: 5,
-    name: 'Upper B',
-    focus: 'Vertical push, arms and back detail',
-    type: 'lift',
-    durationMin: 50,
-    exercises: [
       {
         id: 'db-ohp',
         name: 'Standing dumbbell overhead press',
@@ -578,7 +528,7 @@ export const PROGRAM: TrainingDay[] = [
       {
         id: 'db-curl',
         name: 'Incline dumbbell curl',
-        group: 'arms',
+        group: 'biceps',
         equipment: ['dumbbell', 'bench'],
         sets: 3,
         reps: '10–12',
@@ -598,7 +548,7 @@ export const PROGRAM: TrainingDay[] = [
       {
         id: 'db-skullcrusher',
         name: 'Dumbbell skullcrusher',
-        group: 'arms',
+        group: 'triceps',
         equipment: ['dumbbell', 'bench'],
         sets: 3,
         reps: '12–15',
@@ -616,37 +566,44 @@ export const PROGRAM: TrainingDay[] = [
         formUrl: 'https://exrx.net/WeightExercises/Triceps/DBLyingTriExt',
         formUrlExact: true,
       },
-    ],
+]
+
+const MUSCLE_GROUP_META: Record<Exclude<MuscleGroup, 'full'>, { name: string; focus: string }> = {
+  chest: { name: 'Chest', focus: 'Horizontal and incline press' },
+  back: { name: 'Back', focus: 'Rows and pulling' },
+  legs: { name: 'Legs', focus: 'Squat and hinge patterns, quads, hamstrings, glutes and calves' },
+  shoulders: { name: 'Shoulders', focus: 'Overhead press and lateral/rear delts' },
+  biceps: { name: 'Biceps', focus: 'Elbow flexion' },
+  triceps: { name: 'Triceps', focus: 'Elbow extension' },
+  core: { name: 'Core', focus: 'Bracing and anti-extension' },
+}
+
+const GROUP_ORDER: Exclude<MuscleGroup, 'full'>[] = [
+  'chest', 'back', 'shoulders', 'legs', 'biceps', 'triceps', 'core',
+]
+
+/** Exercises grouped by target muscle. A `full`-tagged exercise (none currently) would need to be listed explicitly per group, since it can't be bucketed automatically. */
+export const MUSCLE_GROUPS: MuscleGroupSection[] = GROUP_ORDER.map((id) => ({
+  id,
+  name: MUSCLE_GROUP_META[id].name,
+  focus: MUSCLE_GROUP_META[id].focus,
+  exercises: ALL_EXERCISES.filter((e) => e.group === id),
+}))
+
+export const CARDIO_SESSIONS: CardioSession[] = [
+  {
+    id: 'zone-2',
+    name: 'Zone 2 run',
+    detail:
+      'Conversational pace — you should be able to speak in full sentences. If you cannot, slow down. Most people run their easy days too hard and their hard days too easy.',
+    minutes: 40,
   },
   {
-    id: 'day-6',
-    day: 6,
+    id: 'intervals',
     name: 'Intervals or long run',
-    focus: 'Conditioning',
-    type: 'cardio',
-    durationMin: 35,
-    exercises: [],
-    cardio: {
-      what: 'Alternate weekly',
-      detail:
-        'Week A — intervals: 10 min easy warm-up, then 6 × (1 min hard / 2 min easy), 8 min cool-down. Week B — long run: 50–60 min at conversational pace. Alternating keeps the aerobic base growing without piling fatigue onto your leg days.',
-      minutes: 35,
-    },
-  },
-  {
-    id: 'day-7',
-    day: 7,
-    name: 'Rest',
-    focus: 'Recovery',
-    type: 'rest',
-    durationMin: 0,
-    exercises: [],
-    cardio: {
-      what: 'Full rest or a walk',
-      detail:
-        'Muscle is built during recovery, not during the session. A 20–30 minute walk and 15 minutes of stretching is ideal; doing nothing is also fine.',
-      minutes: 0,
-    },
+    detail:
+      'Alternate weekly. Week A — intervals: 10 min easy warm-up, then 6 × (1 min hard / 2 min easy), 8 min cool-down. Week B — long run: 50–60 min at conversational pace. Alternating keeps the aerobic base growing without piling fatigue onto your leg days.',
+    minutes: 35,
   },
 ]
 
@@ -681,9 +638,9 @@ export const GOAL_TRAINING: Record<Goal, { setDelta: number; label: string; note
 /** Activity level shifts how much running sits alongside the lifting. */
 export const ACTIVITY_CARDIO: Record<string, { runsPerWeek: number; note: string }> = {
   sedentary: { runsPerWeek: 1, note: 'Start with one easy run a week and build from there.' },
-  light: { runsPerWeek: 2, note: 'Two runs a week alongside the four lifting days.' },
-  moderate: { runsPerWeek: 2, note: 'Two runs a week alongside the four lifting days.' },
-  active: { runsPerWeek: 3, note: 'Three runs a week. Watch that leg-day quality does not suffer.' },
+  light: { runsPerWeek: 2, note: 'Two runs a week alongside your lifting sessions.' },
+  moderate: { runsPerWeek: 2, note: 'Two runs a week alongside your lifting sessions.' },
+  active: { runsPerWeek: 3, note: 'Three runs a week. Watch that leg-training quality does not suffer.' },
   'very-active': {
     runsPerWeek: 3,
     note: 'Three runs a week, and consider a genuine rest day if the lifts start regressing.',
@@ -744,7 +701,7 @@ export const PROGRESSION_RULES = [
 export const WARMUP = [
   '5 minutes easy cardio — a brisk walk, skipping, or jogging on the spot.',
   'Leg swings, 10 each direction per leg.',
-  'Band pull-aparts, 15 — especially before upper days.',
+  'Band pull-aparts, 15 — especially before chest, back or shoulders.',
   'Two ramp-up sets of your first exercise: one at ~50% for 8 reps, one at ~75% for 3.',
 ]
 

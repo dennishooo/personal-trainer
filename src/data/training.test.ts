@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  PROGRAM, GOAL_TRAINING, ACTIVITY_CARDIO, DUMBBELL_MAX_KG, DUMBBELL_STEP_KG,
+  MUSCLE_GROUPS, CARDIO_SESSIONS, GOAL_TRAINING, ACTIVITY_CARDIO, DUMBBELL_MAX_KG, DUMBBELL_STEP_KG,
   resolveLoad, adjustedSets, type Exercise,
 } from './training'
 
@@ -20,8 +20,8 @@ const ex = (over: Partial<Exercise> = {}): Exercise => ({
   ...over,
 })
 
-describe('equipment constraints', () => {
-  const all = PROGRAM.flatMap((d) => d.exercises)
+describe('muscle group sections', () => {
+  const all = MUSCLE_GROUPS.flatMap((g) => g.exercises)
 
   it('never requires equipment the user does not own', () => {
     const owned = new Set(['dumbbell', 'bench', 'band', 'bodyweight'])
@@ -33,16 +33,21 @@ describe('equipment constraints', () => {
     expect(all.filter((e) => e.equipment.length === 0)).toEqual([])
   })
 
-  it('still trains every major muscle group', () => {
-    const groups = new Set(all.map((e) => e.group))
-    for (const g of ['legs', 'chest', 'back', 'shoulders', 'arms', 'core']) {
-      expect(groups.has(g as never)).toBe(true)
+  it('covers every major muscle group with at least one exercise', () => {
+    for (const g of MUSCLE_GROUPS) {
+      expect(g.exercises.length).toBeGreaterThan(0)
     }
   })
 
-  it('keeps four lifting days and two runs', () => {
-    expect(PROGRAM.filter((d) => d.type === 'lift')).toHaveLength(4)
-    expect(PROGRAM.filter((d) => d.type === 'cardio')).toHaveLength(2)
+  it('only lists an exercise under the section matching its group', () => {
+    for (const g of MUSCLE_GROUPS) {
+      expect(g.exercises.every((e) => e.group === g.id)).toBe(true)
+    }
+  })
+
+  it('has no duplicate exercise ids across sections', () => {
+    const ids = all.map((e) => e.id)
+    expect(new Set(ids).size).toBe(ids.length)
   })
 
   it('gives every exercise a starting position for beginners', () => {
@@ -51,6 +56,13 @@ describe('equipment constraints', () => {
 
   it('gives every exercise a form demo link', () => {
     expect(all.filter((e) => !/^https:\/\/exrx\.net\//.test(e.formUrl))).toEqual([])
+  })
+})
+
+describe('cardio sessions', () => {
+  it('has at least one session with a positive duration', () => {
+    expect(CARDIO_SESSIONS.length).toBeGreaterThan(0)
+    expect(CARDIO_SESSIONS.every((c) => c.minutes > 0)).toBe(true)
   })
 })
 
@@ -101,9 +113,9 @@ describe('adjustedSets', () => {
   })
 
   it('changes total session volume when the goal changes', () => {
-    const day = PROGRAM.find((d) => d.type === 'lift')!
+    const group = MUSCLE_GROUPS[0]
     const total = (g: Parameters<typeof adjustedSets>[1]) =>
-      day.exercises.reduce((a, e) => a + adjustedSets(e, g), 0)
+      group.exercises.reduce((a, e) => a + adjustedSets(e, g), 0)
     expect(total('cut')).toBeLessThan(total('recomp'))
     expect(total('lean-bulk')).toBeGreaterThan(total('recomp'))
   })

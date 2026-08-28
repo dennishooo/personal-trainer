@@ -15,6 +15,8 @@ const ex = (over: Partial<Exercise> = {}): Exercise => ({
   position: '',
   cue: '',
   form: [],
+  formUrl: 'https://exrx.net/',
+  formUrlExact: true,
   ...over,
 })
 
@@ -45,6 +47,10 @@ describe('equipment constraints', () => {
 
   it('gives every exercise a starting position for beginners', () => {
     expect(all.filter((e) => !e.position.trim())).toEqual([])
+  })
+
+  it('gives every exercise a form demo link', () => {
+    expect(all.filter((e) => !/^https:\/\/exrx\.net\//.test(e.formUrl))).toEqual([])
   })
 })
 

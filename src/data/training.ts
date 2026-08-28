@@ -25,6 +25,10 @@ export interface Exercise {
   swap?: string
   /** Shown when this exercise is a workaround for equipment the user lacks. */
   upgrade?: string
+  /** ExRx.net demo page for this exercise, linked as "Watch form". */
+  formUrl: string
+  /** True when formUrl is the exact named variant; false when it's the closest ExRx page for the same movement (e.g. their dumbbell page is paywalled). */
+  formUrlExact: boolean
 }
 
 export interface TrainingDay {
@@ -86,6 +90,8 @@ export const PROGRAM: TrainingDay[] = [
           'Drive up through mid-foot. Knees and chest rise together, not the hips first.',
         ],
         swap: 'Two dumbbells at the shoulders once one gets too light.',
+        formUrl: 'https://exrx.net/WeightExercises/Kettlebell/KBGobletSquat',
+        formUrlExact: false,
       },
       {
         id: 'bulgarian-split',
@@ -107,6 +113,8 @@ export const PROGRAM: TrainingDay[] = [
           'Finish all reps on one leg before switching.',
         ],
         upgrade: 'This is the main squat driver without a barbell — one leg at a time means your 32 kg dumbbells load the working leg as hard as far heavier bilateral work would.',
+        formUrl: 'https://exrx.net/WeightExercises/Quadriceps/BWSingleLegSplitSquat',
+        formUrlExact: false,
       },
       {
         id: 'db-rdl',
@@ -127,6 +135,8 @@ export const PROGRAM: TrainingDay[] = [
           'Stop when you feel a strong hamstring stretch, usually around mid-shin.',
           'Drive your hips forward to stand. Squeeze the glutes at the top, do not lean back.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/Hamstrings/DBStrBackStrLegDeadlift',
+        formUrlExact: true,
       },
       {
         id: 'db-hip-thrust',
@@ -146,6 +156,8 @@ export const PROGRAM: TrainingDay[] = [
           'Drive the hips up until your torso is parallel to the floor.',
           'Hold one second at the top, lower under control.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/GluteusMaximus/BBHipThrust',
+        formUrlExact: false,
       },
       {
         id: 'nordic-curl',
@@ -164,6 +176,8 @@ export const PROGRAM: TrainingDay[] = [
           'Control the return slowly — the lengthening half is where hamstrings grow.',
         ],
         upgrade: 'A substitute for the leg curl machine. Hamstrings also get direct work from the RDL, so this is supplementary rather than critical.',
+        formUrl: 'https://exrx.net/WeightExercises/Hamstrings/ASInverseLegCurlBands',
+        formUrlExact: true,
       },
       {
         id: 'calf-raise',
@@ -182,6 +196,8 @@ export const PROGRAM: TrainingDay[] = [
           'Drop the heel below the step for a full stretch.',
           'Rise to the tallest position and hold one second.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/Gastrocnemius/DBSingleLegCalfRaise',
+        formUrlExact: true,
       },
       {
         id: 'plank',
@@ -195,6 +211,8 @@ export const PROGRAM: TrainingDay[] = [
         position: 'Face down, propped on forearms and toes',
         cue: 'Squeeze glutes — that is what stops the hips sagging.',
         form: ['Elbows under shoulders.', 'Body in one line from head to heels.', 'Brace as if about to take a punch.'],
+        formUrl: 'https://exrx.net/WeightExercises/RectusAbdominis/BWFrontPlank',
+        formUrlExact: true,
       },
     ],
   },
@@ -225,6 +243,8 @@ export const PROGRAM: TrainingDay[] = [
           'Lower under control until you feel a stretch across the chest.',
           'To get heavy dumbbells into position, rest them on your knees and kick back as you lie down.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/PectoralSternal/DBBenchPress',
+        formUrlExact: true,
       },
       {
         id: 'db-row',
@@ -245,6 +265,8 @@ export const PROGRAM: TrainingDay[] = [
           'Lower all the way down for a full stretch.',
         ],
         upgrade: 'Your heaviest back exercise. Without a pull-up bar this carries most of the back work, so treat it as a main lift, not an accessory.',
+        formUrl: 'https://exrx.net/WeightExercises/BackGeneral/DBBentOverRow',
+        formUrlExact: true,
       },
       {
         id: 'band-pulldown',
@@ -264,6 +286,8 @@ export const PROGRAM: TrainingDay[] = [
           'Control the return until the arms are fully extended overhead.',
         ],
         upgrade: 'A stand-in for vertical pulling. A pull-up bar would replace this outright — bands lose tension exactly where your lats are strongest, so this is the weakest exercise in the programme.',
+        formUrl: 'https://exrx.net/WeightExercises/LatissimusDorsi/CBFrontPulldown',
+        formUrlExact: false,
       },
       {
         id: 'db-shoulder-press',
@@ -282,6 +306,8 @@ export const PROGRAM: TrainingDay[] = [
           'Press up until the arms are nearly straight.',
           'Lower under control to ear height.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/DeltoidAnterior/DBShoulderPress',
+        formUrlExact: false,
       },
       {
         id: 'lateral-raise',
@@ -301,6 +327,8 @@ export const PROGRAM: TrainingDay[] = [
           'Raise out to the sides to shoulder height, no higher.',
           'Lower slowly, 2 seconds.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/DeltoidLateral/DBLateralRaise',
+        formUrlExact: true,
       },
       {
         id: 'band-face-pull',
@@ -319,6 +347,8 @@ export const PROGRAM: TrainingDay[] = [
           'The external rotation at the end is the whole point.',
         ],
         upgrade: 'Bands are genuinely better than cables here — tension rises as you pull, matching where the movement gets easier.',
+        formUrl: 'https://exrx.net/WeightExercises/DeltoidPosterior/CBStandingRearDeltRowRope',
+        formUrlExact: false,
       },
     ],
   },
@@ -365,6 +395,8 @@ export const PROGRAM: TrainingDay[] = [
           'Drive through the floor, standing up in one piece. Hips and shoulders rise together.',
           'Lower under control. Do not round your back to save a rep.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/Quadriceps/DBSquat',
+        formUrlExact: false,
       },
       {
         id: 'single-leg-rdl',
@@ -385,6 +417,8 @@ export const PROGRAM: TrainingDay[] = [
           'Return by driving the standing hip forward.',
         ],
         upgrade: 'Loads one hamstring at a time, so 32 kg dumbbells stay challenging long after bilateral RDLs get light.',
+        formUrl: 'https://exrx.net/WeightExercises/GluteusMaximus/BWSingleLegStiffLegDeadlift',
+        formUrlExact: false,
       },
       {
         id: 'db-step-up',
@@ -403,6 +437,8 @@ export const PROGRAM: TrainingDay[] = [
           'Step up by driving through the bench foot, standing tall at the top.',
           'Lower under control, tapping the floor lightly before the next rep.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/Quadriceps/DBStepUp',
+        formUrlExact: true,
       },
       {
         id: 'db-sumo-squat',
@@ -421,6 +457,8 @@ export const PROGRAM: TrainingDay[] = [
           'Squat straight down, keeping the torso upright.',
           'Drive up through the heels, squeezing the glutes at the top.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/Quadriceps/DBSquat',
+        formUrlExact: false,
       },
       {
         id: 'lying-leg-raise',
@@ -438,6 +476,8 @@ export const PROGRAM: TrainingDay[] = [
           'Lower slowly without letting the lower back arch away from the floor.',
         ],
         upgrade: 'A pull-up bar would let you do hanging knee raises, which load the abs considerably harder.',
+        formUrl: 'https://exrx.net/WeightExercises/HipFlexors/BWLyingLegRaiseFloor',
+        formUrlExact: true,
       },
     ],
   },
@@ -469,6 +509,8 @@ export const PROGRAM: TrainingDay[] = [
           'Lower under control to shoulder height.',
         ],
         swap: 'Seated on the upright bench if your lower back rounds.',
+        formUrl: 'https://exrx.net/WeightExercises/DeltoidAnterior/DBShoulderPress',
+        formUrlExact: false,
       },
       {
         id: 'db-pullover',
@@ -488,6 +530,8 @@ export const PROGRAM: TrainingDay[] = [
           'Pull it back over your chest using your lats, not your arms.',
         ],
         upgrade: 'The best lat exercise available without a bar, since it loads them in a stretched position. A pull-up would still beat it.',
+        formUrl: 'https://exrx.net/WeightExercises/PectoralSternal/DBPullover',
+        formUrlExact: true,
       },
       {
         id: 'incline-db-press',
@@ -506,6 +550,8 @@ export const PROGRAM: TrainingDay[] = [
           'Press up and slightly together.',
           'Lower until you feel the stretch across the upper chest.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/PectoralClavicular/DBInclineBenchPress',
+        formUrlExact: true,
       },
       {
         id: 'chest-supported-row',
@@ -526,6 +572,8 @@ export const PROGRAM: TrainingDay[] = [
           'Lower fully to a complete stretch.',
         ],
         upgrade: 'Replaces the seated cable row. Removing your legs and lower back from the movement means the back does all the work.',
+        formUrl: 'https://exrx.net/WeightExercises/BackGeneral/DBLyingRow',
+        formUrlExact: true,
       },
       {
         id: 'db-curl',
@@ -544,6 +592,8 @@ export const PROGRAM: TrainingDay[] = [
           'Curl without letting the elbows drift forward.',
           'Lower fully to a dead hang.',
         ],
+        formUrl: 'https://exrx.net/WeightExercises/Biceps/DBInclineCurl',
+        formUrlExact: true,
       },
       {
         id: 'db-skullcrusher',
@@ -563,6 +613,8 @@ export const PROGRAM: TrainingDay[] = [
           'Extend back up without letting the upper arms drift.',
         ],
         upgrade: 'Replaces the cable pushdown. Loads the triceps in a stretched position, which cables do not.',
+        formUrl: 'https://exrx.net/WeightExercises/Triceps/DBLyingTriExt',
+        formUrlExact: true,
       },
     ],
   },

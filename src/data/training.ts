@@ -18,6 +18,8 @@ export interface Exercise {
    */
   loadPerBw?: number
   loadNote?: string
+  /** Plain-English starting position/stance, shown before the form steps so a beginner knows how to set up. */
+  position: string
   cue: string
   form: string[]
   swap?: string
@@ -75,6 +77,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 105,
         loadPerBw: 0.3,
         loadNote: 'one dumbbell, held at the chest',
+        position: 'Standing, feet shoulder-width apart',
         cue: 'Chest tall, elbows inside the knees at the bottom.',
         form: [
           'Hold one dumbbell vertically against your chest, cupping the top head, elbows tucked down.',
@@ -95,6 +98,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 105,
         loadPerBw: 0.18,
         loadNote: 'per dumbbell',
+        position: 'Standing, rear foot up on a bench behind you',
         cue: 'Most of the weight on the front leg — the back leg is a kickstand.',
         form: [
           'Rear foot on the bench, front foot about two feet ahead.',
@@ -115,6 +119,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 105,
         loadPerBw: 0.35,
         loadNote: 'per dumbbell',
+        position: 'Standing, feet hip-width apart',
         cue: 'Hips back, dumbbells close, feel the stretch behind the thigh.',
         form: [
           'Hold a dumbbell in each hand in front of your thighs, knees softly bent.',
@@ -133,6 +138,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 90,
         loadPerBw: 0.4,
         loadNote: 'one dumbbell across the hips',
+        position: 'Sitting on the floor, upper back against the bench',
         cue: 'Tuck the chin, ribs down, squeeze hard at the top.',
         form: [
           'Upper back against the bench, feet flat and about shoulder-width.',
@@ -150,6 +156,7 @@ export const PROGRAM: TrainingDay[] = [
         reps: '10–15',
         restSec: 75,
         loadNote: 'band tension',
+        position: 'Lying face down, or standing',
         cue: 'Slow on the way back, 3 seconds.',
         form: [
           'Anchor the band low behind you and loop it around one ankle.',
@@ -168,6 +175,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 60,
         loadPerBw: 0.25,
         loadNote: 'one dumbbell, held at your side',
+        position: 'Standing on one foot on a step or book',
         cue: 'Full range: deep stretch at the bottom, pause at the top.',
         form: [
           'Stand on one foot with the ball of the foot on a step or book, dumbbell in the same-side hand.',
@@ -184,6 +192,7 @@ export const PROGRAM: TrainingDay[] = [
         sets: 3,
         reps: '30–60 sec',
         restSec: 60,
+        position: 'Face down, propped on forearms and toes',
         cue: 'Squeeze glutes — that is what stops the hips sagging.',
         form: ['Elbows under shoulders.', 'Body in one line from head to heels.', 'Brace as if about to take a punch.'],
       },
@@ -208,6 +217,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 120,
         loadPerBw: 0.3,
         loadNote: 'per dumbbell',
+        position: 'Lying on your back on the bench',
         cue: 'Shoulder blades pulled back and down into the bench.',
         form: [
           'Lie back with the dumbbells at chest level, elbows about 45° from your torso — not flared to 90°.',
@@ -226,6 +236,7 @@ export const PROGRAM: TrainingDay[] = [
         reps: '10–12 per arm',
         restSec: 90,
         loadPerBw: 0.35,
+        position: 'One knee and hand on the bench, other foot on the floor',
         cue: 'Pull with the elbow, not the hand.',
         form: [
           'One knee and hand on the bench, back flat and roughly parallel to the floor.',
@@ -244,6 +255,7 @@ export const PROGRAM: TrainingDay[] = [
         reps: '12–20',
         restSec: 75,
         loadNote: 'band tension',
+        position: 'Kneeling, facing the anchor point',
         cue: 'Drive the elbows down toward your ribs.',
         form: [
           'Anchor the band high — a door anchor, or over a solid beam.',
@@ -263,6 +275,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 90,
         loadPerBw: 0.18,
         loadNote: 'per dumbbell',
+        position: 'Sitting upright on the bench',
         cue: 'Do not let the lower back arch off the bench.',
         form: [
           'Set the bench upright, dumbbells at ear height, palms forward.',
@@ -281,6 +294,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 60,
         loadPerBw: 0.07,
         loadNote: 'per dumbbell — lighter than you think',
+        position: 'Standing, dumbbells at your sides',
         cue: 'Lead with the elbows, stop at shoulder height.',
         form: [
           'Slight bend in the elbows, held throughout.',
@@ -297,6 +311,7 @@ export const PROGRAM: TrainingDay[] = [
         reps: '15–20',
         restSec: 60,
         loadNote: 'band tension — light',
+        position: 'Standing, facing the anchor point',
         cue: 'Pull toward your forehead, ending in a double-bicep pose.',
         form: [
           'Anchor the band at upper-chest height.',
@@ -341,6 +356,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 120,
         loadPerBw: 0.4,
         loadNote: 'per dumbbell',
+        position: 'Standing, feet hip-width apart',
         cue: 'Push the floor away rather than pulling the weight up.',
         form: [
           'Stand with a dumbbell outside each foot, feet hip-width.',
@@ -360,6 +376,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 90,
         loadPerBw: 0.22,
         loadNote: 'per dumbbell',
+        position: 'Standing on one leg',
         cue: 'Hips square to the floor — do not let the free hip rotate open.',
         form: [
           'Stand on one leg, dumbbell in the opposite hand.',
@@ -379,6 +396,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 90,
         loadPerBw: 0.2,
         loadNote: 'per dumbbell',
+        position: 'Standing in front of the bench',
         cue: 'Drive through the top foot — do not push off the bottom one.',
         form: [
           'Dumbbell in each hand, one foot flat on the bench.',
@@ -396,6 +414,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 75,
         loadPerBw: 0.4,
         loadNote: 'one dumbbell, held between the legs',
+        position: 'Standing, wide stance',
         cue: 'Toes turned out about 30°, knees tracking over them.',
         form: [
           'Wide stance, one dumbbell hanging between your legs.',
@@ -411,6 +430,7 @@ export const PROGRAM: TrainingDay[] = [
         sets: 3,
         reps: '12–15',
         restSec: 60,
+        position: 'Lying on your back',
         cue: 'Curl the pelvis up — do not just swing the legs.',
         form: [
           'Lie on your back, hands under your lower back or gripping something behind your head.',
@@ -440,6 +460,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 120,
         loadPerBw: 0.16,
         loadNote: 'per dumbbell',
+        position: 'Standing, feet hip-width apart',
         cue: 'Squeeze the glutes so the press does not become a lean-back.',
         form: [
           'Dumbbells at shoulder height, palms forward, feet hip-width.',
@@ -459,6 +480,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 90,
         loadPerBw: 0.25,
         loadNote: 'one dumbbell, held with both hands',
+        position: 'Lying on your back on the bench',
         cue: 'Keep the elbows slightly bent and fixed — the movement is at the shoulder.',
         form: [
           'Lie on the bench holding one dumbbell over your chest, both hands cupping the top head.',
@@ -477,6 +499,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 90,
         loadPerBw: 0.24,
         loadNote: 'per dumbbell',
+        position: 'Lying back on an inclined bench',
         cue: 'Bench at 30°, not 45° — higher shifts the work to the shoulders.',
         form: [
           'Set the bench to the second or third notch, dumbbells at upper-chest level.',
@@ -494,6 +517,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 90,
         loadPerBw: 0.2,
         loadNote: 'per dumbbell',
+        position: 'Lying face down on an inclined bench',
         cue: 'Chest stays glued to the bench — that is what removes the cheating.',
         form: [
           'Set the bench to about 30° incline and lie face down on it.',
@@ -513,6 +537,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 60,
         loadPerBw: 0.12,
         loadNote: 'per dumbbell',
+        position: 'Sitting back on an inclined bench',
         cue: 'Elbows stay behind the torso — that stretch is the point.',
         form: [
           'Sit back on a 45° incline, arms hanging straight down.',
@@ -530,6 +555,7 @@ export const PROGRAM: TrainingDay[] = [
         restSec: 60,
         loadPerBw: 0.1,
         loadNote: 'per dumbbell',
+        position: 'Lying on your back on a flat bench',
         cue: 'Elbows point at the ceiling and stay there.',
         form: [
           'Lie on the flat bench, dumbbells over your chest, palms facing each other.',

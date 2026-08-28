@@ -12,6 +12,7 @@ const ex = (over: Partial<Exercise> = {}): Exercise => ({
   sets: 3,
   reps: '8–12',
   restSec: 90,
+  position: '',
   cue: '',
   form: [],
   ...over,
@@ -40,6 +41,10 @@ describe('equipment constraints', () => {
   it('keeps four lifting days and two runs', () => {
     expect(PROGRAM.filter((d) => d.type === 'lift')).toHaveLength(4)
     expect(PROGRAM.filter((d) => d.type === 'cardio')).toHaveLength(2)
+  })
+
+  it('gives every exercise a starting position for beginners', () => {
+    expect(all.filter((e) => !e.position.trim())).toEqual([])
   })
 })
 

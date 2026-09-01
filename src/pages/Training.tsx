@@ -10,6 +10,7 @@ import { GOAL_ADJUSTMENT } from '@/lib/nutrition'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PatternFigure, MuscleMap, patternFor, PATTERN_LABEL } from '@/components/illustrations/ExerciseDiagram'
+import { FormVideo } from '@/components/FormVideo'
 import { cn } from '@/lib/utils'
 
 const EQUIPMENT_LABEL: Record<Equipment, string> = {
@@ -290,7 +291,7 @@ function ExerciseCard({
                 className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
               >
                 <ArrowUpRight size={13} />
-                Watch form on ExRx
+                Detailed reference on ExRx
               </a>
             </div>
             {!ex.formUrlExact && (
@@ -298,6 +299,10 @@ function ExerciseCard({
                 ExRx doesn't have this exact variant — the link shows the closest equivalent movement.
               </p>
             )}
+
+            <div className="mt-3 max-w-sm">
+              <FormVideo videoId={ex.videoId} title={ex.name} />
+            </div>
           </div>
 
           <div className="hidden shrink-0 lg:block">

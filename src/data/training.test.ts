@@ -17,6 +17,7 @@ const ex = (over: Partial<Exercise> = {}): Exercise => ({
   form: [],
   formUrl: 'https://exrx.net/',
   formUrlExact: true,
+  videoId: 'dQw4w9WgXcQ',
   ...over,
 })
 
@@ -61,6 +62,15 @@ describe('muscle group sections', () => {
 
   it('gives every exercise a form demo link', () => {
     expect(all.filter((e) => !/^https:\/\/exrx\.net\//.test(e.formUrl))).toEqual([])
+  })
+
+  it('gives every exercise a well-formed YouTube video id', () => {
+    expect(all.filter((e) => !/^[A-Za-z0-9_-]{11}$/.test(e.videoId))).toEqual([])
+  })
+
+  it('has no duplicate demo videos across exercises', () => {
+    const ids = all.map((e) => e.videoId)
+    expect(new Set(ids).size).toBe(ids.length)
   })
 })
 

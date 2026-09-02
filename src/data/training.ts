@@ -29,6 +29,12 @@ export interface Exercise {
   formUrl: string
   /** True when formUrl is the exact named variant; false when it's the closest ExRx page for the same movement (e.g. their dumbbell page is paywalled). */
   formUrlExact: boolean
+  /**
+   * YouTube id of a form demo, embedded inline on the card. ExRx blocks
+   * iframing (X-Frame-Options), so video comes from YouTube and the ExRx
+   * link stays as the written reference.
+   */
+  videoId: string
 }
 
 export interface MuscleGroupSection {
@@ -69,6 +75,7 @@ export const DUMBBELL_STEP_KG = 2
 const ALL_EXERCISES: Exercise[] = [
   {
         id: 'goblet-squat',
+        videoId: 'gCESNsDsbqk',
         name: 'Goblet squat',
         chinese: '高腳杯深蹲',
         group: 'legs',
@@ -92,6 +99,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'bulgarian-split',
+        videoId: 'SkNsa3eBwLA',
         name: 'Bulgarian split squat',
         chinese: '保加利亞分腿蹲',
         group: 'legs',
@@ -115,6 +123,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'db-rdl',
+        videoId: 'FQKfr1YDhEk',
         name: 'Dumbbell Romanian deadlift',
         chinese: '啞鈴羅馬尼亞硬舉',
         group: 'legs',
@@ -137,6 +146,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'db-hip-thrust',
+        videoId: '29OfN4ztW_g',
         name: 'Dumbbell hip thrust',
         group: 'legs',
         equipment: ['dumbbell', 'bench'],
@@ -158,6 +168,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'nordic-curl',
+        videoId: 'fV--eazSoWk',
         name: 'Band-assisted leg curl',
         group: 'legs',
         equipment: ['band'],
@@ -178,6 +189,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'calf-raise',
+        videoId: 'ORT4oJ_R8Qs',
         name: 'Single-leg calf raise',
         group: 'legs',
         equipment: ['dumbbell'],
@@ -198,6 +210,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'plank',
+        videoId: 'kL_NJAkCQBg',
         name: 'Plank',
         chinese: '平板支撐',
         group: 'core',
@@ -213,6 +226,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'db-bench',
+        videoId: 'VmB1G1K7v94',
         name: 'Dumbbell bench press',
         chinese: '啞鈴臥推',
         group: 'chest',
@@ -235,6 +249,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'db-row',
+        videoId: 'pYcpY20QaE8',
         name: 'Single-arm dumbbell row',
         chinese: '單臂啞鈴划船',
         group: 'back',
@@ -257,6 +272,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'band-pulldown',
+        videoId: 'SkT4rqrmH-M',
         name: 'Band lat pulldown',
         group: 'back',
         equipment: ['band'],
@@ -278,6 +294,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'db-shoulder-press',
+        videoId: 'qEwKCR5JCog',
         name: 'Seated dumbbell shoulder press',
         group: 'shoulders',
         equipment: ['dumbbell', 'bench'],
@@ -298,6 +315,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'lateral-raise',
+        videoId: '3VcKaXpzqRo',
         name: 'Lateral raise',
         chinese: '側平舉',
         group: 'shoulders',
@@ -319,6 +337,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'band-face-pull',
+        videoId: 'CSP7YpPv3ds',
         name: 'Band face pull',
         group: 'shoulders',
         equipment: ['band'],
@@ -339,6 +358,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'db-deadlift',
+        videoId: 'lJ3QwaXNJfw',
         name: 'Dumbbell deadlift',
         chinese: '啞鈴硬舉',
         group: 'legs',
@@ -362,6 +382,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'single-leg-rdl',
+        videoId: '84hrdsHgDuQ',
         name: 'Single-leg Romanian deadlift',
         group: 'legs',
         equipment: ['dumbbell'],
@@ -384,6 +405,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'db-step-up',
+        videoId: '7AtIjR-QqVA',
         name: 'Dumbbell step-up',
         group: 'legs',
         equipment: ['dumbbell', 'bench'],
@@ -404,6 +426,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'db-sumo-squat',
+        videoId: 'MwNY25e4QEA',
         name: 'Dumbbell sumo squat',
         group: 'legs',
         equipment: ['dumbbell'],
@@ -424,6 +447,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'lying-leg-raise',
+        videoId: '3oIpxsn6FxQ',
         name: 'Lying leg raise',
         group: 'core',
         equipment: ['bodyweight'],
@@ -443,6 +467,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'db-ohp',
+        videoId: 'bmy7tIopNt4',
         name: 'Standing dumbbell overhead press',
         chinese: '肩上推舉',
         group: 'shoulders',
@@ -466,6 +491,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'db-pullover',
+        videoId: 'Cvsaj2AXevI',
         name: 'Dumbbell pullover',
         group: 'back',
         equipment: ['dumbbell', 'bench'],
@@ -487,6 +513,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'incline-db-press',
+        videoId: '8iPEnn-ltC8',
         name: 'Incline dumbbell press',
         group: 'chest',
         equipment: ['dumbbell', 'bench'],
@@ -507,6 +534,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'chest-supported-row',
+        videoId: 'tvk5Fb2K0Ns',
         name: 'Chest-supported dumbbell row',
         group: 'back',
         equipment: ['dumbbell', 'bench'],
@@ -529,6 +557,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'db-curl',
+        videoId: 'soxrZlIl35U',
         name: 'Incline dumbbell curl',
         group: 'biceps',
         equipment: ['dumbbell', 'bench'],
@@ -549,6 +578,7 @@ const ALL_EXERCISES: Exercise[] = [
       },
       {
         id: 'db-skullcrusher',
+        videoId: 'ir5PsbniVSc',
         name: 'Dumbbell skullcrusher',
         group: 'triceps',
         equipment: ['dumbbell', 'bench'],

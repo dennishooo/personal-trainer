@@ -7,6 +7,9 @@ export default defineConfig({
   // GitHub Pages serves this from /personal-trainer/, not the domain root, so
   // asset URLs need the repo name prefixed. Local dev stays at '/'.
   base: process.env.GITHUB_PAGES ? '/personal-trainer/' : '/',
+  // Honour an externally assigned port (e.g. from a preview harness) so dev
+  // servers from parallel sessions don't fight over 5173.
+  server: process.env.PORT ? { port: Number(process.env.PORT) } : undefined,
   plugins: [react(), tailwindcss()],
   resolve: { alias: { '@': new URL('./src', import.meta.url).pathname } },
   test: {

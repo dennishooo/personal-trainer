@@ -198,8 +198,8 @@ export function MuscleMap({ groups, size = 84 }: { groups: MuscleGroup[]; size?:
 export function patternFor(exerciseId: string): keyof typeof FIGURES {
   if (/squat|split|step-up|calf/.test(exerciseId)) return 'squat'
   if (/deadlift|rdl|thrust|leg-curl|nordic/.test(exerciseId)) return 'hinge'
-  if (/bench|press|ohp|skullcrusher|lateral-raise/.test(exerciseId)) return 'push'
+  if (/bench|press|ohp|skullcrusher|lateral-raise|pushdown|pushup/.test(exerciseId)) return 'push'
   if (/row|pulldown|pullover|face-pull|curl$/.test(exerciseId)) return 'pull'
-  if (/plank|leg-raise/.test(exerciseId)) return 'core'
+  if (/plank|leg-raise|pallof/.test(exerciseId)) return 'core'
   return 'squat'
 }

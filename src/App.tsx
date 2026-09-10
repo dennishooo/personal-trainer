@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, UtensilsCrossed, Pill, Dumbbell, CalendarRange, User, Moon, Sun } from 'lucide-react'
+import { LayoutDashboard, UtensilsCrossed, Apple, Pill, Dumbbell, CalendarRange, User, Moon, Sun } from 'lucide-react'
 import { useTheme, applyTheme } from '@/stores/theme'
 import { Dashboard } from '@/pages/Dashboard'
 import { Meals } from '@/pages/Meals'
 import { Supplements } from '@/pages/Supplements'
 import { Training } from '@/pages/Training'
 import { Week } from '@/pages/Week'
+import { Nutrition } from '@/pages/Nutrition'
 import { ProfilePage } from '@/pages/Profile'
 import { cn } from '@/lib/utils'
 
@@ -13,6 +14,7 @@ const TABS = [
   { id: 'dashboard', label: 'Today', icon: LayoutDashboard, Page: Dashboard },
   { id: 'week', label: 'Week', icon: CalendarRange, Page: Week },
   { id: 'meals', label: 'Meals', icon: UtensilsCrossed, Page: Meals },
+  { id: 'nutrition', label: 'Nutrition', icon: Apple, Page: Nutrition },
   { id: 'training', label: 'Training', icon: Dumbbell, Page: Training },
   { id: 'supplements', label: 'Supplements', icon: Pill, Page: Supplements },
   { id: 'profile', label: 'Profile', icon: User, Page: ProfilePage },

@@ -82,9 +82,11 @@ npm run build
 
 ## Accounts & sync (optional)
 
-By default everything lives in the browser's localStorage — no account needed.
-To let people sign in and sync across devices, back it with a free
-[Supabase](https://supabase.com) project:
+Without Supabase configured, everything lives in the browser's localStorage —
+no account needed. When Supabase **is** configured, sign-in is required: the
+app shows a sign-in screen until the user authenticates, and every choice
+(profile, weigh-ins, meal picks) is saved to their account. To set it up, back
+the app with a free [Supabase](https://supabase.com) project:
 
 1. Create a project, then run [`supabase/schema.sql`](supabase/schema.sql) in the
    SQL editor. It creates one RLS-protected `user_state` table.

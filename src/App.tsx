@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { LayoutDashboard, UtensilsCrossed, Apple, Pill, Dumbbell, CalendarRange, User, Moon, Sun } from 'lucide-react'
 import { useTheme, applyTheme } from '@/stores/theme'
+import { useSync } from '@/stores/sync'
+import { useUi } from '@/stores/ui'
+import { SignInScreen } from '@/components/SignInScreen'
 import { Dashboard } from '@/pages/Dashboard'
 import { Meals } from '@/pages/Meals'
 import { Supplements } from '@/pages/Supplements'
@@ -21,13 +24,25 @@ const TABS = [
 ] as const
 
 export default function App() {
-  const [tab, setTab] = useState<(typeof TABS)[number]['id']>('dashboard')
+  const { tab, setTab } = useUi()
   const { dark, toggle } = useTheme()
+  const syncStatus = useSync((s) => s.status)
   const Page = TABS.find((t) => t.id === tab)!.Page
 
   useEffect(() => {
     applyTheme(dark)
   }, [dark])
+
+  // When a backend is configured, the app requires an account: everything the
+  // user does is saved to it. 'local-only' builds (no env vars) skip the gate.
+  if (syncStatus === 'restoring') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
+        Loading…
+      </div>
+    )
+  }
+  if (syncStatus === 'signed-out') return <SignInScreen />
 
   return (
     <div className="min-h-screen bg-background">

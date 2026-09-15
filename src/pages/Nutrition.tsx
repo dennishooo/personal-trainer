@@ -7,11 +7,11 @@ import {
   applyFilters,
   costPerProteinServing,
   countItems,
-  EMPTY_FILTERS,
+  EMPTY_STORED_FILTERS,
   LEANNESS_LABELS,
   MACRO_LABELS,
   PROTEIN_SERVING_G,
-  type FilterState,
+  toFilterState,
   type MacroKey,
   type SortKey,
 } from '@/lib/nutrition-filter'
@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge'
 import { BackToTop } from '@/components/BackToTop'
 import { INGREDIENT_DRAG, MacroCalculator } from '@/components/MacroCalculator'
 import { usePicks } from '@/stores/picks'
+import { useUi } from '@/stores/ui'
 import { cn } from '@/lib/utils'
 
 const SORTS: { key: SortKey; label: string }[] = [
@@ -45,11 +46,9 @@ const TOTAL = countItems(NUTRITION_GROUPS)
 /** Stable anchor id for a group section, for the jump-to-section control. */
 const sectionId = (name: string) => `nutrition-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
 
-/** Toggles a value in an immutable set, for filter chip state. */
-function toggle<T>(set: ReadonlySet<T>, value: T): Set<T> {
-  const next = new Set(set)
-  next.has(value) ? next.delete(value) : next.add(value)
-  return next
+/** Toggles a value in an immutable array, for persisted filter chip state. */
+function toggle<T>(arr: readonly T[], value: T): T[] {
+  return arr.includes(value) ? arr.filter((x) => x !== value) : [...arr, value]
 }
 
 /**
@@ -93,18 +92,21 @@ function Chip({
 }
 
 export function Nutrition() {
-  const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS)
-  const [showFilters, setShowFilters] = useState(false)
+  // Filters and panel state persist in the UI store so they survive switching
+  // pages and reloads.
+  const stored = useUi((s) => s.nutrition)
+  const update = useUi((s) => s.setNutrition)
+  const showFilters = useUi((s) => s.nutritionFiltersOpen)
+  const setShowFilters = useUi((s) => s.setNutritionFiltersOpen)
   const [dragActive, setDragActive] = useState(false)
   const addPick = usePicks((s) => s.addPick)
   const controlsRef = useRef<HTMLDivElement>(null)
   const [controlsH, setControlsH] = useState(0)
 
+  const filters = useMemo(() => toFilterState(stored), [stored])
   const groups = useMemo(() => applyFilters(NUTRITION_GROUPS, filters), [filters])
   const shown = countItems(groups)
   const activeCount = activeFilterCount(filters)
-
-  const update = (patch: Partial<FilterState>) => setFilters((f) => ({ ...f, ...patch }))
 
   // Table headers stick directly below the control bar, so the offset has to
   // track its real height — it grows when the filter panel opens or chips wrap.
@@ -151,7 +153,7 @@ export function Nutrition() {
             aria-label="Search ingredients"
             className="min-w-0 flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
           />
-          <Chip active={showFilters} onClick={() => setShowFilters((v) => !v)}>
+          <Chip active={showFilters} onClick={() => setShowFilters(!showFilters)}>
             <SlidersHorizontal size={13} />
             Filters
             {activeCount > 0 && (
@@ -204,7 +206,7 @@ export function Nutrition() {
                 <Chip
                   key={g.name}
                   active={filters.categories.has(g.name)}
-                  onClick={() => update({ categories: toggle(filters.categories, g.name) })}
+                  onClick={() => update({ categories: toggle(stored.categories, g.name) })}
                 >
                   <Icon name={g.icon} size={14} strokeWidth={1.8} />
                   {g.name}
@@ -220,7 +222,7 @@ export function Nutrition() {
                 <Chip
                   key={m}
                   active={filters.macros.has(m)}
-                  onClick={() => update({ macros: toggle(filters.macros, m) })}
+                  onClick={() => update({ macros: toggle(stored.macros, m) })}
                 >
                   {MACRO_LABELS[m]}
                 </Chip>
@@ -235,7 +237,7 @@ export function Nutrition() {
                 <Chip
                   key={l}
                   active={filters.leanness.has(l)}
-                  onClick={() => update({ leanness: toggle(filters.leanness, l) })}
+                  onClick={() => update({ leanness: toggle(stored.leanness, l) })}
                 >
                   <span className={cn('size-2 rounded-full', LEAN_DOT[l])} title={LEANNESS_LABELS[l]} />
                   {l[0].toUpperCase() + l.slice(1)}
@@ -243,7 +245,7 @@ export function Nutrition() {
               ))}
               <button
                 type="button"
-                onClick={() => setFilters(EMPTY_FILTERS)}
+                onClick={() => update(EMPTY_STORED_FILTERS)}
                 className="ml-auto rounded-lg border border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
               >
                 Clear all

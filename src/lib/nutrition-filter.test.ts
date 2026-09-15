@@ -6,6 +6,8 @@ import {
   costPerProteinServing,
   countItems,
   EMPTY_FILTERS,
+  EMPTY_STORED_FILTERS,
+  toFilterState,
   LEAN_MAX_FAT,
   MEDIUM_MAX_FAT,
   PROTEIN_SERVING_G,
@@ -150,6 +152,21 @@ describe('applyFilters', () => {
       filters({ categories: new Set(['Beef cuts']), macros: new Set(['high-protein']), query: 'sir' }),
     )
     expect(out.flatMap((g) => g.items).map((i) => i.name)).toEqual(['Beef sirloin'])
+  })
+})
+
+describe('toFilterState', () => {
+  it('rebuilds Sets from the JSON-safe stored shape', () => {
+    const f = toFilterState({ query: 'to', categories: ['Fats'], macros: ['low-cal'], leanness: ['lean', 'medium'], sort: 'cost' })
+    expect(f.query).toBe('to')
+    expect(f.categories.has('Fats')).toBe(true)
+    expect(f.macros.has('low-cal')).toBe(true)
+    expect(f.leanness.size).toBe(2)
+    expect(f.sort).toBe('cost')
+  })
+
+  it('maps the empty stored shape onto the empty filter state', () => {
+    expect(toFilterState(EMPTY_STORED_FILTERS)).toEqual(EMPTY_FILTERS)
   })
 })
 

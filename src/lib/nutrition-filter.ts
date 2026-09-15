@@ -97,6 +97,33 @@ export const EMPTY_FILTERS: FilterState = {
   sort: 'name',
 }
 
+/** FilterState with arrays instead of Sets, so it survives JSON persistence. */
+export interface StoredFilters {
+  query: string
+  categories: string[]
+  macros: MacroKey[]
+  leanness: Leanness[]
+  sort: SortKey
+}
+
+export const EMPTY_STORED_FILTERS: StoredFilters = {
+  query: '',
+  categories: [],
+  macros: [],
+  leanness: [],
+  sort: 'name',
+}
+
+export function toFilterState(f: StoredFilters): FilterState {
+  return {
+    query: f.query,
+    categories: new Set(f.categories),
+    macros: new Set(f.macros),
+    leanness: new Set(f.leanness),
+    sort: f.sort,
+  }
+}
+
 function matchesQuery(it: NutritionItem, groupName: string, q: string): boolean {
   if (!q) return true
   const needle = q.trim().toLowerCase()

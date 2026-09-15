@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Clock, Star, ChefHat, Search, Utensils } from 'lucide-react'
 import { Icon, type IconName } from '@/components/icons'
 import { usePlan } from '@/stores/profile'
+import { useUi } from '@/stores/ui'
 import {
   RECIPES, CUISINE_LABELS, SLOT_LABELS, scaleAmount, scaleMacros,
   type Recipe, type Slot, type Cuisine,
@@ -17,9 +18,12 @@ const SLOTS: Slot[] = ['breakfast', 'lunch-out', 'dinner', 'snack']
 
 export function Meals() {
   const { profile, favourites, toggleFavourite } = usePlan()
-  const [slot, setSlot] = useState<Slot>('breakfast')
-  const [cuisine, setCuisine] = useState<Cuisine | 'all'>('all')
-  const [query, setQuery] = useState('')
+  // Slot, cuisine and search persist in the UI store across pages and reloads.
+  const { slot, cuisine, query } = useUi((s) => s.meals)
+  const setMeals = useUi((s) => s.setMeals)
+  const setSlot = (slot: Slot) => setMeals({ slot })
+  const setCuisine = (cuisine: Cuisine | 'all') => setMeals({ cuisine })
+  const setQuery = (query: string) => setMeals({ query })
   const [open, setOpen] = useState<string | null>(null)
 
   const shown = useMemo(() => {

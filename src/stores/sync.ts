@@ -17,7 +17,9 @@ import { usePicks } from '@/stores/picks'
  * localStorage stays the source of truth for signed-out and offline use.
  */
 
-export type SyncStatus = 'local-only' | 'signed-out' | 'syncing' | 'synced' | 'error'
+// 'restoring' is the moment between page load and Supabase resolving whether a
+// session exists — the auth gate shows a splash instead of flashing the sign-in.
+export type SyncStatus = 'local-only' | 'restoring' | 'signed-out' | 'syncing' | 'synced' | 'error'
 
 interface SyncUiState {
   status: SyncStatus
@@ -26,7 +28,7 @@ interface SyncUiState {
 }
 
 export const useSync = create<SyncUiState>(() => ({
-  status: supabase ? 'signed-out' : 'local-only',
+  status: supabase ? 'restoring' : 'local-only',
   email: null,
   error: null,
 }))

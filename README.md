@@ -95,7 +95,14 @@ To let people sign in and sync across devices, back it with a free
    values as repository **variables** (`VITE_SUPABASE_URL`,
    `VITE_SUPABASE_ANON_KEY`).
 
-Sign-in is by email magic link — no passwords. The first sign-in seeds the
+To also enable the "Sign in with Google" button: create an OAuth client in
+[Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+(Web application; authorised redirect URI is shown by Supabase under
+Auth → Sign In/Providers → Google), then paste the client ID and secret into
+that Supabase provider screen. Without this the button shows Supabase's
+"provider is not enabled" error; email sign-in is unaffected.
+
+Sign-in is by email magic link or Google — no passwords. The first sign-in seeds the
 account from whatever the browser already holds; after that the account copy is
 the cross-device truth (last write wins), with localStorage kept as the offline
 cache. When the env vars are absent the app builds and runs local-only, exactly

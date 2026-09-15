@@ -129,6 +129,19 @@ export async function signInWithEmail(email: string): Promise<string | null> {
   return error ? error.message : null
 }
 
+/**
+ * Google OAuth sign-in. Needs the Google provider enabled in Supabase
+ * (Auth → Sign In/Providers) with a Google Cloud OAuth client behind it.
+ */
+export async function signInWithGoogle(): Promise<string | null> {
+  if (!supabase) return 'Sync is not configured'
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href },
+  })
+  return error ? error.message : null
+}
+
 /** Signs out. Local data stays on this device, exactly as before sync. */
 export async function signOut() {
   await supabase?.auth.signOut()

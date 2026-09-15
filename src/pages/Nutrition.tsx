@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, SlidersHorizontal } from 'lucide-react'
+import { ChevronDown, Plus, SlidersHorizontal } from 'lucide-react'
 import { Icon } from '@/components/icons'
 import { NUTRITION_GROUPS, type Leanness, type NutritionItem } from '@/data/nutrition-reference'
 import {
@@ -16,6 +16,8 @@ import {
   type SortKey,
 } from '@/lib/nutrition-filter'
 import { Badge } from '@/components/ui/badge'
+import { MacroCalculator } from '@/components/MacroCalculator'
+import type { Pick } from '@/lib/macro-calc'
 import { cn } from '@/lib/utils'
 
 const SORTS: { key: SortKey; label: string }[] = [
@@ -89,6 +91,7 @@ function Chip({
 export function Nutrition() {
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS)
   const [showFilters, setShowFilters] = useState(false)
+  const [picks, setPicks] = useState<Pick[]>([])
   const controlsRef = useRef<HTMLDivElement>(null)
   const [controlsH, setControlsH] = useState(0)
 
@@ -97,6 +100,14 @@ export function Nutrition() {
   const activeCount = activeFilterCount(filters)
 
   const update = (patch: Partial<FilterState>) => setFilters((f) => ({ ...f, ...patch }))
+
+  // Re-adding a picked ingredient bumps its weight rather than duplicating the row.
+  const addPick = (item: NutritionItem) =>
+    setPicks((p) => {
+      const i = p.findIndex((x) => x.item.name === item.name)
+      if (i === -1) return [...p, { item, grams: 100 }]
+      return p.map((x, j) => (j === i ? { ...x, grams: x.grams + 100 } : x))
+    })
 
   // Table headers stick directly below the control bar, so the offset has to
   // track its real height — it grows when the filter panel opens or chips wrap.
@@ -121,9 +132,19 @@ export function Nutrition() {
           <Badge tone="outline" className="align-middle text-[10px]">
             in plan
           </Badge>
-          ; the rest are for ordering out or at the butcher.
+          ; the rest are for ordering out or at the butcher. Tap <Plus size={12} className="inline align-[-1px]" /> on
+          any row to build a meal in the calculator and see it against your daily target.
         </p>
       </header>
+
+      {picks.length > 0 && (
+        <MacroCalculator
+          picks={picks}
+          onGramsChange={(i, grams) => setPicks((p) => p.map((x, j) => (j === i ? { ...x, grams } : x)))}
+          onRemove={(i) => setPicks((p) => p.filter((_, j) => j !== i))}
+          onClear={() => setPicks([])}
+        />
+      )}
 
       {/* ── Controls: search + sort always visible, filters collapse ── */}
       <div
@@ -270,6 +291,15 @@ export function Nutrition() {
                     >
                       <td className="!text-left">
                         <span className="flex items-center gap-2.5">
+                          <button
+                            type="button"
+                            onClick={() => addPick(item)}
+                            aria-label={`Add ${item.name} to calculator`}
+                            title="Add to calculator"
+                            className="flex size-6 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-accent-foreground"
+                          >
+                            <Plus size={13} />
+                          </button>
                           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary">
                             <Icon name={item.icon} size={17} strokeWidth={1.7} />
                           </span>

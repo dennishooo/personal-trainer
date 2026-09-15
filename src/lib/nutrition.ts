@@ -125,6 +125,17 @@ export function macroTargets(profile: Profile, age: number): MacroTargets {
   }
 }
 
+/**
+ * Folds an accepted calorie adjustment into the targets. Protein and fat are
+ * held (they're set by bodyweight, not calories), so carbs absorb the change.
+ */
+export function adjustedTargets(base: MacroTargets, calorieOverride: number): MacroTargets {
+  if (!calorieOverride) return base
+  const calories = base.calories + calorieOverride
+  const carbG = Math.max(0, Math.round((calories - base.proteinKcal - base.fatKcal) / 4))
+  return { ...base, calories, carbG, carbKcal: carbG * 4 }
+}
+
 /** Maintenance calories, for showing the deficit size alongside the target. */
 export function maintenanceCalories(profile: Profile, age: number) {
   return tdee(bmr({ sex: profile.sex, weightKg: profile.weightKg, heightCm: profile.heightCm, age }), profile.activity)

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  ageFrom, bmr, tdee, bmi, bmiBand, macroTargets, proteinPerKg,
+  adjustedTargets, ageFrom, bmr, tdee, bmi, bmiBand, macroTargets, proteinPerKg,
   mealTargets, targetWeightRange, maintenanceCalories, weeklyRateTarget,
   type Profile,
 } from './nutrition'
@@ -109,6 +109,28 @@ describe('macroTargets', () => {
     const older = macroTargets(dennis, 55)
     expect(older.calories).toBeLessThan(m.calories)
     expect(older.proteinG).toBeGreaterThan(m.proteinG)
+  })
+})
+
+describe('adjustedTargets', () => {
+  it('moves calories into carbs while holding protein and fat', () => {
+    const base = macroTargets(dennis, 33)
+    const up = adjustedTargets(base, 200)
+    expect(up.calories).toBe(base.calories + 200)
+    expect(up.proteinG).toBe(base.proteinG)
+    expect(up.fatG).toBe(base.fatG)
+    expect(up.carbG).toBe(base.carbG + 50)
+    expect(up.carbKcal).toBe(up.carbG * 4)
+  })
+
+  it('returns the base targets untouched for a zero override', () => {
+    const base = macroTargets(dennis, 33)
+    expect(adjustedTargets(base, 0)).toBe(base)
+  })
+
+  it('never drives carbs negative on a large downward override', () => {
+    const base = macroTargets(dennis, 33)
+    expect(adjustedTargets(base, -5000).carbG).toBe(0)
   })
 })
 

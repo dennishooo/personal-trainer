@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Activity, Flame, Scale, TrendingDown, Droplets, Wheat } from 'lucide-react'
 import { usePlan } from '@/stores/profile'
 import {
-  ageFrom, bmi, bmiBand, macroTargets, maintenanceCalories, mealTargets,
+  adjustedTargets, ageFrom, bmi, bmiBand, macroTargets, maintenanceCalories, mealTargets,
   targetWeightRange, GOAL_ADJUSTMENT,
 } from '@/lib/nutrition'
 import { evaluatePlan, suggestGoalChange, ewma } from '@/lib/adjust'
@@ -34,12 +34,7 @@ export function Dashboard() {
   const range = targetWeightRange(profile.heightCm)
 
   // The override folds the accepted adjustment into every derived number.
-  const targets = useMemo(() => {
-    if (!calorieOverride) return base
-    const calories = base.calories + calorieOverride
-    const carbG = Math.max(0, Math.round((calories - base.proteinKcal - base.fatKcal) / 4))
-    return { ...base, calories, carbG, carbKcal: carbG * 4 }
-  }, [base, calorieOverride])
+  const targets = useMemo(() => adjustedTargets(base, calorieOverride), [base, calorieOverride])
 
   const verdict = useMemo(() => evaluatePlan(profile, weights), [profile, weights])
   const goalHint = suggestGoalChange(profile, bmiValue)

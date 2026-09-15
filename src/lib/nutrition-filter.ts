@@ -6,7 +6,7 @@
  */
 import type { Leanness, NutritionGroup, NutritionItem } from '@/data/nutrition-reference'
 
-export type SortKey = 'name' | 'protein' | 'kcal' | 'carb' | 'fat' | 'density'
+export type SortKey = 'name' | 'protein' | 'kcal' | 'carb' | 'fat' | 'density' | 'cost'
 export type MacroKey = 'high-protein' | 'low-cal' | 'low-carb' | 'low-fat' | 'efficient' | 'in-plan'
 
 /** Fat thresholds that define the leanness bands, in grams per 100 g. */
@@ -43,6 +43,20 @@ export function proteinPerKcal(it: NutritionItem): number {
   return it.kcal === 0 ? 0 : it.proteinG / it.kcal
 }
 
+/** Protein serving the cost column prices: roughly one meal's protein target. */
+export const PROTEIN_SERVING_G = 30
+
+/**
+ * HKD spent to buy PROTEIN_SERVING_G of protein — the "is this worth the money"
+ * number. Null for unpriced items and for anything with too little protein for
+ * the ratio to mean much (a sauce technically "has protein" but nobody buys
+ * doubanjiang to hit a macro target).
+ */
+export function costPerProteinServing(it: NutritionItem): number | null {
+  if (it.pricePer100gHKD === undefined || it.proteinG < 3) return null
+  return (it.pricePer100gHKD / it.proteinG) * PROTEIN_SERVING_G
+}
+
 export function sortItems(items: NutritionItem[], key: SortKey): NutritionItem[] {
   const c = [...items]
   switch (key) {
@@ -58,6 +72,12 @@ export function sortItems(items: NutritionItem[], key: SortKey): NutritionItem[]
       return c.sort((a, b) => b.fatG - a.fatG)
     case 'density':
       return c.sort((a, b) => proteinPerKcal(b) - proteinPerKcal(a))
+    case 'cost':
+      // Cheapest protein first; unpriced items sink to the bottom.
+      return c.sort(
+        (a, b) =>
+          (costPerProteinServing(a) ?? Infinity) - (costPerProteinServing(b) ?? Infinity),
+      )
   }
 }
 

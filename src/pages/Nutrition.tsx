@@ -1,14 +1,16 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, SlidersHorizontal } from 'lucide-react'
 import { Icon } from '@/components/icons'
-import { NUTRITION_GROUPS, type Leanness } from '@/data/nutrition-reference'
+import { NUTRITION_GROUPS, type Leanness, type NutritionItem } from '@/data/nutrition-reference'
 import {
   activeFilterCount,
   applyFilters,
+  costPerProteinServing,
   countItems,
   EMPTY_FILTERS,
   LEANNESS_LABELS,
   MACRO_LABELS,
+  PROTEIN_SERVING_G,
   type FilterState,
   type MacroKey,
   type SortKey,
@@ -23,6 +25,7 @@ const SORTS: { key: SortKey; label: string }[] = [
   { key: 'carb', label: 'Carbs' },
   { key: 'fat', label: 'Fat' },
   { key: 'density', label: 'Protein / kcal' },
+  { key: 'cost', label: 'Cheapest protein' },
 ]
 
 const MACROS: MacroKey[] = ['high-protein', 'low-cal', 'low-carb', 'low-fat', 'efficient', 'in-plan']
@@ -41,6 +44,20 @@ function toggle<T>(set: ReadonlySet<T>, value: T): Set<T> {
   const next = new Set(set)
   next.has(value) ? next.delete(value) : next.add(value)
   return next
+}
+
+/**
+ * HKD to buy one meal's protein from this item, with the underlying assumed
+ * price surfaced on hover. Dash for unpriced items (vegetables, oils, sauces).
+ */
+function ProteinCostCell({ item }: { item: NutritionItem }) {
+  const cost = costPerProteinServing(item)
+  if (cost === null) return <td className="text-muted-foreground">—</td>
+  return (
+    <td title={`assumes HK$${item.pricePer100gHKD}/100 g — edit in nutrition-reference.ts`}>
+      ${cost.toFixed(1)}
+    </td>
+  )
 }
 
 function Chip({
@@ -225,7 +242,7 @@ export function Nutrition() {
             {/* A scroll container clips position:sticky, so the wrapper only becomes one
                 below the table's min-width; above it the header sticks to the viewport. */}
             <div className="rounded-xl border border-border bg-card max-[980px]:overflow-x-auto">
-              <table className="w-full min-w-[860px] border-separate border-spacing-0 text-sm">
+              <table className="w-full min-w-[940px] border-separate border-spacing-0 text-sm">
                 <thead>
                   <tr
                     style={{ ['--th-top' as string]: `${controlsH}px` }}
@@ -238,6 +255,7 @@ export function Nutrition() {
                     <th scope="col">Protein g</th>
                     <th scope="col">Carb g</th>
                     <th scope="col">Fat g</th>
+                    <th scope="col">$ / {PROTEIN_SERVING_G} g protein</th>
                     <th scope="col">Portion</th>
                     <th scope="col" className="!text-left">
                       Notes
@@ -287,6 +305,7 @@ export function Nutrition() {
                       <td className="font-semibold text-protein">{item.proteinG}</td>
                       <td className="text-carb">{item.carbG}</td>
                       <td className="text-fat">{item.fatG}</td>
+                      <ProteinCostCell item={item} />
                       <td className="whitespace-nowrap text-xs text-muted-foreground">{item.portion}</td>
                       <td className="!text-left text-xs text-muted-foreground">{item.note ?? '—'}</td>
                     </tr>
@@ -312,6 +331,13 @@ export function Nutrition() {
         <p>
           <strong className="text-foreground">Leanness dots</strong> grade fat per 100 g: lean under
           8 g, medium 8–17 g, fatty over 17 g.
+        </p>
+        <p>
+          <strong className="text-foreground">Protein cost</strong> is HKD to buy{' '}
+          {PROTEIN_SERVING_G} g of protein — roughly one meal's worth — from typical chilled
+          supermarket prices (Sep 2026). Frozen shops and wet markets run cheaper, city'super
+          higher; hover a value to see the assumed price, and edit{' '}
+          <code>pricePer100gHKD</code> in <code>nutrition-reference.ts</code> to match your store.
         </p>
       </footer>
     </div>

@@ -16,8 +16,9 @@ import {
   type SortKey,
 } from '@/lib/nutrition-filter'
 import { Badge } from '@/components/ui/badge'
-import { MacroCalculator } from '@/components/MacroCalculator'
-import type { Pick } from '@/lib/macro-calc'
+import { BackToTop } from '@/components/BackToTop'
+import { INGREDIENT_DRAG, MacroCalculator } from '@/components/MacroCalculator'
+import { usePicks } from '@/stores/picks'
 import { cn } from '@/lib/utils'
 
 const SORTS: { key: SortKey; label: string }[] = [
@@ -40,6 +41,9 @@ const LEAN_DOT: Record<Leanness, string> = {
 }
 
 const TOTAL = countItems(NUTRITION_GROUPS)
+
+/** Stable anchor id for a group section, for the jump-to-section control. */
+const sectionId = (name: string) => `nutrition-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
 
 /** Toggles a value in an immutable set, for filter chip state. */
 function toggle<T>(set: ReadonlySet<T>, value: T): Set<T> {
@@ -91,7 +95,8 @@ function Chip({
 export function Nutrition() {
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS)
   const [showFilters, setShowFilters] = useState(false)
-  const [picks, setPicks] = useState<Pick[]>([])
+  const [dragActive, setDragActive] = useState(false)
+  const addPick = usePicks((s) => s.addPick)
   const controlsRef = useRef<HTMLDivElement>(null)
   const [controlsH, setControlsH] = useState(0)
 
@@ -100,14 +105,6 @@ export function Nutrition() {
   const activeCount = activeFilterCount(filters)
 
   const update = (patch: Partial<FilterState>) => setFilters((f) => ({ ...f, ...patch }))
-
-  // Re-adding a picked ingredient bumps its weight rather than duplicating the row.
-  const addPick = (item: NutritionItem) =>
-    setPicks((p) => {
-      const i = p.findIndex((x) => x.item.name === item.name)
-      if (i === -1) return [...p, { item, grams: 100 }]
-      return p.map((x, j) => (j === i ? { ...x, grams: x.grams + 100 } : x))
-    })
 
   // Table headers stick directly below the control bar, so the offset has to
   // track its real height — it grows when the filter panel opens or chips wrap.
@@ -133,18 +130,12 @@ export function Nutrition() {
             in plan
           </Badge>
           ; the rest are for ordering out or at the butcher. Tap <Plus size={12} className="inline align-[-1px]" /> on
-          any row to build a meal in the calculator and see it against your daily target.
+          any row — or drag it — to build a meal in the calculator and see it against your daily
+          target.
         </p>
       </header>
 
-      {picks.length > 0 && (
-        <MacroCalculator
-          picks={picks}
-          onGramsChange={(i, grams) => setPicks((p) => p.map((x, j) => (j === i ? { ...x, grams } : x)))}
-          onRemove={(i) => setPicks((p) => p.filter((_, j) => j !== i))}
-          onClear={() => setPicks([])}
-        />
-      )}
+      <MacroCalculator dragActive={dragActive} />
 
       {/* ── Controls: search + sort always visible, filters collapse ── */}
       <div
@@ -179,6 +170,24 @@ export function Nutrition() {
               {s.label}
             </Chip>
           ))}
+
+          <select
+            value=""
+            onChange={(e) => {
+              document.getElementById(e.target.value)?.scrollIntoView()
+            }}
+            aria-label="Jump to section"
+            className="rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-medium text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="" disabled>
+              Jump to…
+            </option>
+            {groups.map((g) => (
+              <option key={g.name} value={sectionId(g.name)}>
+                {g.name}
+              </option>
+            ))}
+          </select>
 
           <span className="ml-auto text-xs text-muted-foreground">
             {shown === TOTAL ? `${TOTAL} ingredients` : `${shown} of ${TOTAL} ingredients`}
@@ -253,7 +262,13 @@ export function Nutrition() {
       {groups.map((group) => {
         const hasCuts = group.items.some((i) => i.cut)
         return (
-          <section key={group.name} className="space-y-3">
+          <section
+            key={group.name}
+            id={sectionId(group.name)}
+            // Anchored scrolls must land below the sticky control bar.
+            style={{ scrollMarginTop: controlsH + 12 }}
+            className="space-y-3"
+          >
             <div className="flex items-center gap-2">
               <Icon name={group.icon} size={20} strokeWidth={1.8} className="text-primary" />
               <h2 className="text-lg font-semibold tracking-tight">{group.name}</h2>
@@ -287,13 +302,20 @@ export function Nutrition() {
                   {group.items.map((item) => (
                     <tr
                       key={`${group.name}-${item.name}`}
-                      className="[&>td]:border-b [&>td]:border-border [&>td]:bg-card [&>td]:px-3.5 [&>td]:py-2.5 [&>td]:text-right [&>td]:tabular-nums last:[&>td]:border-b-0 hover:[&>td]:bg-secondary"
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData(INGREDIENT_DRAG, item.name)
+                        e.dataTransfer.effectAllowed = 'copy'
+                        setDragActive(true)
+                      }}
+                      onDragEnd={() => setDragActive(false)}
+                      className="cursor-grab active:cursor-grabbing [&>td]:border-b [&>td]:border-border [&>td]:bg-card [&>td]:px-3.5 [&>td]:py-2.5 [&>td]:text-right [&>td]:tabular-nums last:[&>td]:border-b-0 hover:[&>td]:bg-secondary"
                     >
                       <td className="!text-left">
                         <span className="flex items-center gap-2.5">
                           <button
                             type="button"
-                            onClick={() => addPick(item)}
+                            onClick={() => addPick(item.name)}
                             aria-label={`Add ${item.name} to calculator`}
                             title="Add to calculator"
                             className="flex size-6 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-accent-foreground"
@@ -370,6 +392,8 @@ export function Nutrition() {
           <code>pricePer100gHKD</code> in <code>nutrition-reference.ts</code> to match your store.
         </p>
       </footer>
+
+      <BackToTop />
     </div>
   )
 }

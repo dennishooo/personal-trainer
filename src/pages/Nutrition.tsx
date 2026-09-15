@@ -280,7 +280,7 @@ export function Nutrition() {
             {/* A scroll container clips position:sticky, so the wrapper only becomes one
                 below the table's min-width; above it the header sticks to the viewport. */}
             <div className="rounded-xl border border-border bg-card max-[980px]:overflow-x-auto">
-              <table className="w-full min-w-[940px] border-separate border-spacing-0 text-sm">
+              <table className="w-full min-w-[1020px] border-separate border-spacing-0 text-sm">
                 <thead>
                   <tr
                     style={{ ['--th-top' as string]: `${controlsH}px` }}
@@ -293,6 +293,7 @@ export function Nutrition() {
                     <th scope="col">Protein g</th>
                     <th scope="col">Carb g</th>
                     <th scope="col">Fat g</th>
+                    <th scope="col">HK$ / 100 g</th>
                     <th scope="col">$ / {PROTEIN_SERVING_G} g protein</th>
                     <th scope="col">Portion</th>
                     <th scope="col" className="!text-left">
@@ -359,6 +360,9 @@ export function Nutrition() {
                       <td className="font-semibold text-protein">{item.proteinG}</td>
                       <td className="text-carb">{item.carbG}</td>
                       <td className="text-fat">{item.fatG}</td>
+                      <td className={item.pricePer100gHKD === undefined ? 'text-muted-foreground' : ''}>
+                        {item.pricePer100gHKD === undefined ? '—' : `$${item.pricePer100gHKD}`}
+                      </td>
                       <ProteinCostCell item={item} />
                       <td className="whitespace-nowrap text-xs text-muted-foreground">{item.portion}</td>
                       <td className="!text-left text-xs text-muted-foreground">{item.note ?? '—'}</td>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { NUTRITION_GROUPS, type NutritionItem } from '@/data/nutrition-reference'
 import type { MacroTargets } from '@/lib/nutrition'
-import { addStoredPick, deltasFrom, moveItem, resolvePicks, scalePick, totalsFor, upsertSavedMeal } from './macro-calc'
+import { addStoredPick, deltasFrom, mealCostHKD, moveItem, pickCostHKD, resolvePicks, scalePick, totalsFor, upsertSavedMeal } from './macro-calc'
 
 const breast: NutritionItem = { name: 'Chicken breast', icon: 'meat', kcal: 120, proteinG: 22.5, carbG: 0, fatG: 2.6, portion: '170 g' }
 const rice: NutritionItem = { name: 'White rice, cooked', icon: 'bowl-chopsticks', kcal: 130, proteinG: 2.7, carbG: 28.2, fatG: 0.3, portion: '180 g' }
@@ -39,6 +39,32 @@ describe('deltasFrom', () => {
   it('reports eaten minus target, signed', () => {
     const deltas = deltasFrom({ kcal: 2100, proteinG: 150.5, carbG: 194, fatG: 70 }, targets)
     expect(deltas).toEqual({ kcal: 100, proteinG: -9.5, carbG: 0, fatG: 5 })
+  })
+})
+
+describe('pick and meal cost', () => {
+  const priced: NutritionItem = { ...breast, pricePer100gHKD: 7 }
+
+  it('scales the per-100g price by weight', () => {
+    expect(pickCostHKD({ item: priced, grams: 170 })).toBeCloseTo(11.9)
+  })
+
+  it('is null for unpriced items', () => {
+    expect(pickCostHKD({ item: rice, grams: 180 })).toBeNull()
+  })
+
+  it('totals a fully priced meal as complete', () => {
+    expect(mealCostHKD([{ item: priced, grams: 170 }, { item: priced, grams: 100 }])).toEqual({
+      totalHKD: 18.9,
+      complete: true,
+    })
+  })
+
+  it('marks the total as a floor when any pick is unpriced', () => {
+    expect(mealCostHKD([{ item: priced, grams: 100 }, { item: rice, grams: 180 }])).toEqual({
+      totalHKD: 7,
+      complete: false,
+    })
   })
 })
 

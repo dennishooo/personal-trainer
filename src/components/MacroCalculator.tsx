@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Bookmark, GripVertical, X } from 'lucide-react'
 import { NUTRITION_GROUPS } from '@/data/nutrition-reference'
-import { deltasFrom, resolvePicks, scalePick, totalsFor } from '@/lib/macro-calc'
+import { deltasFrom, mealCostHKD, pickCostHKD, resolvePicks, scalePick, totalsFor } from '@/lib/macro-calc'
 import { adjustedTargets, ageFrom, macroTargets } from '@/lib/nutrition'
 import { usePicks } from '@/stores/picks'
 import { usePlan } from '@/stores/profile'
@@ -14,6 +14,13 @@ const PICK_DRAG = 'application/x-pick'
 
 /** Signed rendering: the sign is the point of the row, so always show it. */
 const signed = (n: number) => (n > 0 ? `+${n}` : `${n}`)
+
+/** Cost of one pick at its weight; dash for unpriced items. */
+function PickCostCell({ pick }: { pick: ReturnType<typeof resolvePicks>[number] }) {
+  const cost = pickCostHKD(pick)
+  if (cost === null) return <td className="text-muted-foreground">—</td>
+  return <td>${cost}</td>
+}
 
 /**
  * Totals up the picked ingredients and shows them against the day's macro
@@ -38,6 +45,7 @@ export function MacroCalculator({ dragActive }: { dragActive: boolean }) {
 
   const totals = totalsFor(picks)
   const deltas = deltasFrom(totals, targets)
+  const cost = mealCostHKD(picks)
 
   const deltaTone = {
     // Over on calories is the miss that matters; protein is the one to hit.
@@ -171,7 +179,7 @@ export function MacroCalculator({ dragActive }: { dragActive: boolean }) {
         </p>
       ) : (
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[600px] border-separate border-spacing-0 text-sm">
+        <table className="w-full min-w-[660px] border-separate border-spacing-0 text-sm">
           <thead>
             <tr className="[&>th]:whitespace-nowrap [&>th]:border-b [&>th]:border-border [&>th]:px-3.5 [&>th]:py-2 [&>th]:text-right [&>th]:text-[10px] [&>th]:font-semibold [&>th]:uppercase [&>th]:tracking-wider [&>th]:text-muted-foreground">
               <th scope="col" aria-label="Reorder" className="w-8" />
@@ -181,6 +189,7 @@ export function MacroCalculator({ dragActive }: { dragActive: boolean }) {
               <th scope="col">Protein g</th>
               <th scope="col">Carb g</th>
               <th scope="col">Fat g</th>
+              <th scope="col">HK$</th>
               <th scope="col" />
             </tr>
           </thead>
@@ -242,6 +251,7 @@ export function MacroCalculator({ dragActive }: { dragActive: boolean }) {
                   <td className="text-protein">{scaled.proteinG}</td>
                   <td className="text-carb">{scaled.carbG}</td>
                   <td className="text-fat">{scaled.fatG}</td>
+                  <PickCostCell pick={pick} />
                   <td>
                     <button
                       type="button"
@@ -263,6 +273,9 @@ export function MacroCalculator({ dragActive }: { dragActive: boolean }) {
               <td className="text-protein">{totals.proteinG}</td>
               <td className="text-carb">{totals.carbG}</td>
               <td className="text-fat">{totals.fatG}</td>
+              <td title={cost.complete ? undefined : 'Some picks have no price — this is a floor'}>
+                {cost.complete ? `$${cost.totalHKD}` : `≥$${cost.totalHKD}`}
+              </td>
               <td />
             </tr>
             <tr className="[&>td]:border-b [&>td]:border-border [&>td]:px-3.5 [&>td]:py-2 [&>td]:text-right [&>td]:text-xs [&>td]:text-muted-foreground [&>td]:tabular-nums">
@@ -271,6 +284,7 @@ export function MacroCalculator({ dragActive }: { dragActive: boolean }) {
               <td>{targets.proteinG}</td>
               <td>{targets.carbG}</td>
               <td>{targets.fatG}</td>
+              <td>—</td>
               <td />
             </tr>
             <tr className="[&>td]:px-3.5 [&>td]:py-2 [&>td]:text-right [&>td]:font-semibold [&>td]:tabular-nums">
@@ -281,6 +295,7 @@ export function MacroCalculator({ dragActive }: { dragActive: boolean }) {
               <td className={cn(deltaTone.proteinG)}>{signed(deltas.proteinG)}</td>
               <td className={cn(deltaTone.carbG)}>{signed(deltas.carbG)}</td>
               <td className={cn(deltaTone.fatG)}>{signed(deltas.fatG)}</td>
+              <td className="text-muted-foreground">—</td>
               <td />
             </tr>
           </tfoot>

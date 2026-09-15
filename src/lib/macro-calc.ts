@@ -93,6 +93,27 @@ export function scalePick({ item, grams }: Pick): MacroTotals {
   }
 }
 
+/** HKD cost of one pick at its weight, or null when the item is unpriced. */
+export function pickCostHKD({ item, grams }: Pick): number | null {
+  if (item.pricePer100gHKD === undefined) return null
+  return +((item.pricePer100gHKD * grams) / 100).toFixed(1)
+}
+
+/**
+ * Total HKD cost of a meal. `complete` is false when any pick is unpriced,
+ * so the UI can show the total as a floor rather than an exact figure.
+ */
+export function mealCostHKD(picks: Pick[]): { totalHKD: number; complete: boolean } {
+  let totalHKD = 0
+  let complete = true
+  for (const pick of picks) {
+    const cost = pickCostHKD(pick)
+    if (cost === null) complete = false
+    else totalHKD = +(totalHKD + cost).toFixed(1)
+  }
+  return { totalHKD, complete }
+}
+
 export function totalsFor(picks: Pick[]): MacroTotals {
   return picks.map(scalePick).reduce(
     (sum, t) => ({

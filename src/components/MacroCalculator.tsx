@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { GripVertical, X } from 'lucide-react'
+import { Bookmark, GripVertical, X } from 'lucide-react'
 import { NUTRITION_GROUPS } from '@/data/nutrition-reference'
 import { deltasFrom, resolvePicks, scalePick, totalsFor } from '@/lib/macro-calc'
 import { adjustedTargets, ageFrom, macroTargets } from '@/lib/nutrition'
@@ -22,9 +22,13 @@ const signed = (n: number) => (n > 0 ? `+${n}` : `${n}`)
  * table and reordered by their grip handle.
  */
 export function MacroCalculator({ dragActive }: { dragActive: boolean }) {
-  const { picks: stored, addPick, setGrams, removePick, movePick, clearPicks } = usePicks()
+  const {
+    picks: stored, savedMeals, addPick, setGrams, removePick, movePick, clearPicks,
+    saveMeal, loadMeal, deleteMeal,
+  } = usePicks()
   const { profile, calorieOverride } = usePlan()
   const [dropReady, setDropReady] = useState(false)
+  const [mealName, setMealName] = useState('')
 
   const picks = useMemo(() => resolvePicks(stored, NUTRITION_GROUPS), [stored])
   const targets = useMemo(
@@ -58,9 +62,9 @@ export function MacroCalculator({ dragActive }: { dragActive: boolean }) {
     setDropReady(false)
   }
 
-  if (picks.length === 0 && !dragActive) return null
+  if (picks.length === 0 && savedMeals.length === 0 && !dragActive) return null
 
-  if (picks.length === 0) {
+  if (picks.length === 0 && dragActive) {
     return (
       <div
         onDragOver={acceptIngredient}
@@ -94,15 +98,78 @@ export function MacroCalculator({ dragActive }: { dragActive: boolean }) {
             {calorieOverride !== 0 && ' (adjustment included)'}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={clearPicks}
-          className="rounded-lg border border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-        >
-          Clear
-        </button>
+        {picks.length > 0 && (
+          <form
+            className="flex items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault()
+              saveMeal(mealName)
+              setMealName('')
+            }}
+          >
+            <input
+              value={mealName}
+              onChange={(e) => setMealName(e.target.value)}
+              required
+              placeholder="Name this meal…"
+              aria-label="Name for saved meal"
+              className="h-8 w-36 rounded-lg border border-border bg-background px-2 text-xs outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <button
+              type="submit"
+              className="flex h-8 items-center gap-1.5 rounded-lg border border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <Bookmark size={12} /> Save
+            </button>
+            <button
+              type="button"
+              onClick={clearPicks}
+              className="h-8 rounded-lg border border-dashed border-border px-3 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              Clear
+            </button>
+          </form>
+        )}
       </div>
 
+      {savedMeals.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Saved
+          </span>
+          {savedMeals.map((meal) => (
+            <span
+              key={meal.id}
+              className="flex items-center overflow-hidden rounded-lg border border-border text-xs"
+            >
+              <button
+                type="button"
+                onClick={() => loadMeal(meal.id)}
+                title={`Load ${meal.name} (${meal.picks.length} ingredients)`}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+              >
+                <Bookmark size={11} className="text-primary" />
+                {meal.name}
+                <span className="text-muted-foreground">{meal.picks.length}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteMeal(meal.id)}
+                aria-label={`Delete saved meal ${meal.name}`}
+                className="border-l border-border px-1.5 py-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              >
+                <X size={11} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {picks.length === 0 ? (
+        <p className="px-4 py-4 text-sm text-muted-foreground">
+          Load a saved meal, or add ingredients from the table below.
+        </p>
+      ) : (
       <div className="overflow-x-auto">
         <table className="w-full min-w-[600px] border-separate border-spacing-0 text-sm">
           <thead>
@@ -219,6 +286,7 @@ export function MacroCalculator({ dragActive }: { dragActive: boolean }) {
           </tfoot>
         </table>
       </div>
+      )}
     </section>
   )
 }

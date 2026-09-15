@@ -7,7 +7,7 @@
  * wins. That's the right trade-off for a personal planner: no merge logic to
  * get wrong, and the schema never blocks adding a field to a store.
  */
-import type { StoredPick } from '@/lib/macro-calc'
+import type { SavedMeal, StoredPick } from '@/lib/macro-calc'
 import type { Profile } from '@/lib/nutrition'
 import type { WeightEntry } from '@/lib/adjust'
 
@@ -25,6 +25,7 @@ export interface PlanSnapshot {
 
 export interface PicksSnapshot {
   picks: StoredPick[]
+  savedMeals: SavedMeal[]
 }
 
 export function planSnapshot(s: PlanSnapshot): PlanSnapshot {
@@ -33,7 +34,9 @@ export function planSnapshot(s: PlanSnapshot): PlanSnapshot {
 }
 
 export function picksSnapshot(s: PicksSnapshot): PicksSnapshot {
-  return { picks: s.picks }
+  // A remote row written before saved meals existed lacks the field; default
+  // it so a sign-in never wipes this device's saved meals with undefined.
+  return { picks: s.picks, savedMeals: s.savedMeals ?? [] }
 }
 
 /** Structural equality, to skip pushes that would write identical rows. */

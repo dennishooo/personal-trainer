@@ -29,9 +29,18 @@ describe('planSnapshot', () => {
 })
 
 describe('picksSnapshot', () => {
-  it('keeps only the picks', () => {
-    const state = { picks: [{ name: 'Firm tofu', grams: 200 }], addPick: () => {} }
-    expect(picksSnapshot(state)).toEqual({ picks: [{ name: 'Firm tofu', grams: 200 }] })
+  it('keeps picks and saved meals, dropping store actions', () => {
+    const state = {
+      picks: [{ name: 'Firm tofu', grams: 200 }],
+      savedMeals: [{ id: 'a', name: 'Lunch', picks: [{ name: 'Banana', grams: 118 }] }],
+      addPick: () => {},
+    }
+    expect(picksSnapshot(state)).toEqual({ picks: state.picks, savedMeals: state.savedMeals })
+  })
+
+  it('defaults saved meals for rows written before the field existed', () => {
+    const legacy = { picks: [] } as unknown as Parameters<typeof picksSnapshot>[0]
+    expect(picksSnapshot(legacy)).toEqual({ picks: [], savedMeals: [] })
   })
 })
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { NUTRITION_GROUPS, type NutritionItem } from '@/data/nutrition-reference'
 import type { MacroTargets } from '@/lib/nutrition'
-import { addStoredPick, deltasFrom, moveItem, resolvePicks, scalePick, totalsFor } from './macro-calc'
+import { addStoredPick, deltasFrom, moveItem, resolvePicks, scalePick, totalsFor, upsertSavedMeal } from './macro-calc'
 
 const breast: NutritionItem = { name: 'Chicken breast', icon: 'meat', kcal: 120, proteinG: 22.5, carbG: 0, fatG: 2.6, portion: '170 g' }
 const rice: NutritionItem = { name: 'White rice, cooked', icon: 'bowl-chopsticks', kcal: 130, proteinG: 2.7, carbG: 28.2, fatG: 0.3, portion: '180 g' }
@@ -50,6 +50,28 @@ describe('addStoredPick', () => {
   it('bumps the weight of an existing pick instead of duplicating it', () => {
     const once = addStoredPick([], 'Firm tofu')
     expect(addStoredPick(once, 'Firm tofu')).toEqual([{ name: 'Firm tofu', grams: 200 }])
+  })
+})
+
+describe('upsertSavedMeal', () => {
+  const picks = [{ name: 'Firm tofu', grams: 200 }]
+  const newId = () => 'id-1'
+
+  it('saves the current picks under a new name with a fresh snapshot', () => {
+    const meals = upsertSavedMeal([], ' Lunch prep ', picks, newId)
+    expect(meals).toEqual([{ id: 'id-1', name: 'Lunch prep', picks }])
+    expect(meals[0].picks).not.toBe(picks)
+  })
+
+  it('overwrites a meal saved under the same name, keeping its id', () => {
+    const first = upsertSavedMeal([], 'Lunch', picks, () => 'id-1')
+    const updated = upsertSavedMeal(first, 'Lunch', [{ name: 'Banana', grams: 118 }], () => 'id-2')
+    expect(updated).toEqual([{ id: 'id-1', name: 'Lunch', picks: [{ name: 'Banana', grams: 118 }] }])
+  })
+
+  it('refuses empty names and empty selections', () => {
+    expect(upsertSavedMeal([], '   ', picks, newId)).toEqual([])
+    expect(upsertSavedMeal([], 'Lunch', [], newId)).toEqual([])
   })
 })
 

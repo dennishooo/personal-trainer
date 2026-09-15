@@ -20,6 +20,32 @@ export interface StoredPick {
   grams: number
 }
 
+/** A named, saved combination of picks — a reusable meal. */
+export interface SavedMeal {
+  id: string
+  name: string
+  picks: StoredPick[]
+}
+
+/**
+ * Saves the current picks under a name. Saving under an existing name
+ * overwrites that meal — "save as X" should mean X is now this, not that a
+ * second X appears.
+ */
+export function upsertSavedMeal(
+  meals: SavedMeal[],
+  name: string,
+  picks: StoredPick[],
+  newId: () => string,
+): SavedMeal[] {
+  const trimmed = name.trim()
+  if (!trimmed || picks.length === 0) return meals
+  if (meals.some((m) => m.name === trimmed)) {
+    return meals.map((m) => (m.name === trimmed ? { ...m, picks: [...picks] } : m))
+  }
+  return [...meals, { id: newId(), name: trimmed, picks: [...picks] }]
+}
+
 /** Adds 100 g of an ingredient, bumping the weight if it's already picked. */
 export function addStoredPick(picks: StoredPick[], name: string): StoredPick[] {
   const i = picks.findIndex((p) => p.name === name)

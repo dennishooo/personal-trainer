@@ -5,6 +5,8 @@ import {
 } from '@/lib/nutrition'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { AccountCard } from '@/components/AccountCard'
+import { useSync } from '@/stores/sync'
 import { cn } from '@/lib/utils'
 
 const GOALS: Goal[] = ['recomp', 'cut', 'lean-bulk', 'maintain']
@@ -12,6 +14,7 @@ const ACTIVITIES: ActivityKey[] = ['sedentary', 'light', 'moderate', 'active', '
 
 export function ProfilePage() {
   const { profile, setProfile, setGoal, setActivity, weights, calorieOverride } = usePlan()
+  const syncStatus = useSync((s) => s.status)
   const age = ageFrom(profile.birthDate)
   const basal = bmr({ sex: profile.sex, weightKg: profile.weightKg, heightCm: profile.heightCm, age })
   const maintenance = maintenanceCalories(profile, age)
@@ -178,12 +181,15 @@ export function ProfilePage() {
         </CardContent>
       </Card>
 
+      <AccountCard />
+
       <Card>
         <CardHeader>
           <CardTitle>Your data</CardTitle>
           <CardDescription>
-            Everything is stored in this browser only — nothing is sent anywhere. Clearing site data
-            wipes it, so export if you care about the history.
+            {syncStatus === 'synced' || syncStatus === 'syncing'
+              ? 'Stored in this browser and synced to your account.'
+              : 'Everything is stored in this browser only — nothing is sent anywhere. Clearing site data wipes it, so export if you care about the history.'}
           </CardDescription>
         </CardHeader>
         <CardContent>

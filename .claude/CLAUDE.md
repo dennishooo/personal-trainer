@@ -1,7 +1,8 @@
 # personal-plan
 
-Purely-frontend React app: a self-adjusting fitness/diet/supplement planner for a single user.
-No backend. All state persists to `localStorage` via zustand `persist`.
+Frontend React app: a self-adjusting fitness/diet/supplement planner.
+All state persists to `localStorage` via zustand `persist`; an optional Supabase
+backend (`src/stores/sync.ts`) adds magic-link auth and per-user cross-device sync.
 
 ## Stack
 
@@ -15,6 +16,7 @@ No backend. All state persists to `localStorage` via zustand `persist`.
 | recharts | ^3.10 | charts; `ResponsiveContainer` needs a sized parent |
 | lucide-react | ^1.34 | icons |
 | vitest | ^4.1 | jsdom env, globals on |
+| @supabase/supabase-js | ^2 | optional sync; client is null when `VITE_SUPABASE_*` env vars unset and the app runs local-only |
 
 ## Conventions
 

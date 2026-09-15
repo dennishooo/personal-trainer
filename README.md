@@ -72,13 +72,34 @@ src/
 ```
 
 Calculation logic is deliberately separated from presentation so it can be tested
-directly. 55 tests cover the engines and the store.
+directly. The test suite covers the engines and the stores.
 
 ```bash
 npm run test        # vitest
 npm run type-check
 npm run build
 ```
+
+## Accounts & sync (optional)
+
+By default everything lives in the browser's localStorage — no account needed.
+To let people sign in and sync across devices, back it with a free
+[Supabase](https://supabase.com) project:
+
+1. Create a project, then run [`supabase/schema.sql`](supabase/schema.sql) in the
+   SQL editor. It creates one RLS-protected `user_state` table.
+2. In Auth → URL Configuration, set the Site URL to the deployed app and add
+   `http://localhost:5173` as a redirect URL for dev.
+3. Copy `.env.example` to `.env.local` and fill in the project URL and anon key
+   (Project Settings → API). For the GitHub Pages deploy, add the same two
+   values as repository **variables** (`VITE_SUPABASE_URL`,
+   `VITE_SUPABASE_ANON_KEY`).
+
+Sign-in is by email magic link — no passwords. The first sign-in seeds the
+account from whatever the browser already holds; after that the account copy is
+the cross-device truth (last write wins), with localStorage kept as the offline
+cache. When the env vars are absent the app builds and runs local-only, exactly
+as before.
 
 ## Illustrations
 

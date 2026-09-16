@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, Plus, SlidersHorizontal } from 'lucide-react'
 import { Icon } from '@/components/icons'
+import { REFERENCE_KG } from '@/data/meals'
 import { NUTRITION_GROUPS, type Leanness, type NutritionItem } from '@/data/nutrition-reference'
 import {
   activeFilterCount,
@@ -11,6 +12,7 @@ import {
   LEANNESS_LABELS,
   MACRO_LABELS,
   PROTEIN_SERVING_G,
+  portionMacros,
   scalePortion,
   toFilterState,
   type MacroKey,
@@ -63,6 +65,26 @@ function ProteinCostCell({ item }: { item: NutritionItem }) {
   return (
     <td title={`assumes HK$${item.pricePer100gHKD}/100 g — edit in nutrition-reference.ts`}>
       ${cost.toFixed(1)}
+    </td>
+  )
+}
+
+/**
+ * The scaled serving, with that serving's own macros on hover.
+ *
+ * The macro columns are per 100 g but this column is a real portion, so the
+ * two are on different bases; the title spells out what the serving actually
+ * costs you. Fixed servings (a tablespoon, one egg) get no tooltip — their
+ * gram weight is already in the label.
+ */
+function PortionCell({ item, weightKg }: { item: NutritionItem; weightKg: number }) {
+  const m = portionMacros(item, weightKg)
+  return (
+    <td
+      className="whitespace-nowrap text-xs text-muted-foreground"
+      title={m ? `this serving: ${m.kcal} kcal · ${m.proteinG} g protein · ${m.carbG} g carb · ${m.fatG} g fat` : undefined}
+    >
+      {scalePortion(item, weightKg)}
     </td>
   )
 }
@@ -368,7 +390,7 @@ export function Nutrition() {
                         {item.pricePer100gHKD === undefined ? '—' : `$${item.pricePer100gHKD}`}
                       </td>
                       <ProteinCostCell item={item} />
-                      <td className="whitespace-nowrap text-xs text-muted-foreground">{scalePortion(item, profile.weightKg)}</td>
+                      <PortionCell item={item} weightKg={profile.weightKg} />
                       <td className="!text-left text-xs text-muted-foreground">{item.note ?? '—'}</td>
                     </tr>
                   ))}
@@ -393,6 +415,13 @@ export function Nutrition() {
         <p>
           <strong className="text-foreground">Leanness dots</strong> grade fat per 100 g: lean under
           8 g, medium 8–17 g, fatty over 17 g.
+        </p>
+        <p>
+          <strong className="text-foreground">Portions</strong> scale with the bodyweight in your
+          profile, from servings quoted at {REFERENCE_KG} kg, rounded to 5 g. Seasonings and
+          countable units (a tablespoon of oil, one egg, a clove of garlic) stay fixed — bodyweight
+          doesn't change what a tablespoon is. Hover a scaled portion for that serving's own macros;
+          the columns themselves are per 100 g.
         </p>
         <p>
           <strong className="text-foreground">Protein cost</strong> is HKD to buy{' '}

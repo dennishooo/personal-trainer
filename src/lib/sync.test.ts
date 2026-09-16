@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { customDishesSnapshot, dishLogSnapshot, picksSnapshot, planSnapshot, snapshotsEqual, SYNC_KEYS, type PlanSnapshot } from './sync'
+import { customDishesSnapshot, dishLogSnapshot, picksSnapshot, planSnapshot, snapshotsEqual, SYNC_KEYS, workoutLogSnapshot, type PlanSnapshot } from './sync'
 
 const plan: PlanSnapshot = {
   profile: {
@@ -64,7 +64,7 @@ describe('dishLogSnapshot', () => {
 
 describe('SYNC_KEYS', () => {
   it('covers every store that persists user data', () => {
-    expect([...SYNC_KEYS]).toEqual(['plan', 'picks', 'dishLog', 'customDishes'])
+    expect([...SYNC_KEYS]).toEqual(['plan', 'picks', 'dishLog', 'customDishes', 'workoutLog'])
   })
 })
 
@@ -76,5 +76,18 @@ describe('customDishesSnapshot', () => {
 
   it('defaults a row written before custom dishes existed to empty', () => {
     expect(customDishesSnapshot({} as never)).toEqual({ dishes: [] })
+  })
+})
+
+describe('workoutLogSnapshot', () => {
+  it('keeps only the logged sets, never the store actions', () => {
+    const sets = [{ setId: 's1', date: '2026-09-16', exerciseId: 'goblet-squat', weightKg: 24, reps: 12 }]
+    expect(workoutLogSnapshot({ sets, addSet: () => {} } as never)).toEqual({ sets })
+  })
+
+  it('defaults a row written before the workout log existed', () => {
+    // Without this, signing in on a device that has history would overwrite it
+    // with undefined from an older remote row.
+    expect(workoutLogSnapshot({} as never)).toEqual({ sets: [] })
   })
 })

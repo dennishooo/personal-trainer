@@ -30,5 +30,11 @@ backend (`src/stores/sync.ts`) adds magic-link auth and per-user cross-device sy
   restaurant portion, as served** (for the Eating out page). Don't merge them — the bases differ.
   `DISHES` is a read-only curated reference; user-added dishes live in the `custom-dishes` store and
   are merged on read via `allDishes()`. Read the merged list, never `DISHES` directly, in the page.
+- The workout log (`src/lib/workout-log.ts`, `src/stores/workout-log.ts`) stores performed sets
+  **verbatim** — weight and reps are the user's own measurements, so unlike the dish log there is no
+  reference dataset that could later correct them. Sets are keyed by exercise id and date, so editing
+  `src/data/training.ts` never orphans history. Rep ranges are parsed out of the exercise's `reps`
+  string, which also carries the unit: `'30–60 sec'` marks a timed hold, so `isTimed()` reads that
+  string rather than a separate field that could drift out of sync with it.
 - Every store that persists user data must be registered in `SYNC_KEYS` (`src/lib/sync.ts`) and
   wired into `src/stores/sync.ts`, or it won't follow the user across devices.

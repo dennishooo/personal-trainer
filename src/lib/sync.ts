@@ -12,8 +12,9 @@ import type { LogEntry } from '@/lib/dish-log'
 import type { SavedMeal, StoredPick } from '@/lib/macro-calc'
 import type { Profile } from '@/lib/nutrition'
 import type { WeightEntry } from '@/lib/adjust'
+import type { SetEntry } from '@/lib/workout-log'
 
-export const SYNC_KEYS = ['plan', 'picks', 'dishLog', 'customDishes'] as const
+export const SYNC_KEYS = ['plan', 'picks', 'dishLog', 'customDishes', 'workoutLog'] as const
 export type SyncKey = (typeof SYNC_KEYS)[number]
 
 /** The persisted data fields of the plan store — no actions, ever. */
@@ -38,6 +39,10 @@ export interface CustomDishesSnapshot {
   dishes: Dish[]
 }
 
+export interface WorkoutLogSnapshot {
+  sets: SetEntry[]
+}
+
 export function planSnapshot(s: PlanSnapshot): PlanSnapshot {
   const { profile, weights, supplements, favourites, calorieOverride } = s
   return { profile, weights, supplements, favourites, calorieOverride }
@@ -57,6 +62,12 @@ export function dishLogSnapshot(s: DishLogSnapshot): DishLogSnapshot {
 
 export function customDishesSnapshot(s: CustomDishesSnapshot): CustomDishesSnapshot {
   return { dishes: s.dishes ?? [] }
+}
+
+export function workoutLogSnapshot(s: WorkoutLogSnapshot): WorkoutLogSnapshot {
+  // Same defensive default as the dish log: a row written before the workout
+  // log existed has no sets field, and undefined must not wipe this device.
+  return { sets: s.sets ?? [] }
 }
 
 /** Structural equality, to skip pushes that would write identical rows. */

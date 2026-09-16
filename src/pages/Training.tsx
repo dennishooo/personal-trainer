@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Timer, Repeat, ChevronDown, AlertTriangle, ArrowUpRight, ArrowUp, Footprints, Moon, X } from 'lucide-react'
+import { Timer, Repeat, ChevronDown, AlertTriangle, ArrowUpRight, ArrowUp, Footprints, Moon, X, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { usePlan } from '@/stores/profile'
 import { useUi } from '@/stores/ui'
 import {
@@ -12,6 +12,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { PatternFigure, MuscleMap, patternFor, PATTERN_LABEL } from '@/components/illustrations/ExerciseDiagram'
 import { FormVideo } from '@/components/FormVideo'
+import { SetLogger, DayProgressBadge } from '@/components/SetLogger'
+import { useWorkoutLog } from '@/stores/workout-log'
+import { shiftISO, todayISO } from '@/lib/workout-log'
 import { cn } from '@/lib/utils'
 
 const EQUIPMENT_LABEL: Record<Equipment, string> = {
@@ -25,6 +28,7 @@ const EQUIPMENT_LABEL: Record<Equipment, string> = {
 export function Training() {
   const { profile } = usePlan()
   const { trainingDay, setTrainingDay } = useUi()
+  const { logDate, setLogDate } = useWorkoutLog()
 
   const goalTraining = GOAL_TRAINING[profile.goal]
   const cardio = ACTIVITY_CARDIO[profile.activity]
@@ -94,6 +98,7 @@ export function Training() {
               goal={profile.goal}
               isRunDay={runningDays.has(d.day)}
               selected={selectedDay?.day === d.day}
+              logDate={logDate}
               onSelect={() => setTrainingDay(selectedDay?.day === d.day ? null : d.day)}
             />
           ))}
@@ -143,6 +148,8 @@ export function Training() {
           weightKg={profile.weightKg}
           goal={profile.goal}
           isRunDay={runningDays.has(selectedDay.day)}
+          logDate={logDate}
+          setLogDate={setLogDate}
           onClear={() => setTrainingDay(null)}
         />
       ) : (
@@ -230,13 +237,15 @@ const KIND_LABEL: Record<SplitDay['kind'], string> = {
 }
 
 function SplitDayCard({
-  day, goal, isRunDay, selected, onSelect,
+  day, goal, isRunDay, selected, onSelect, logDate,
 }: {
   day: SplitDay
   goal: Parameters<typeof adjustedSets>[1]
   isRunDay: boolean
   selected: boolean
   onSelect: () => void
+  /** Date the logger is writing to — the badge counts that day's sets, not today's. */
+  logDate: string
 }) {
   const exercises = splitDayExercises(day)
   const totalSets = exercises.reduce((a, e) => a + adjustedSets(e, goal), 0)
@@ -270,6 +279,9 @@ function SplitDayCard({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
+          {day.kind !== 'rest' && (
+            <DayProgressBadge exerciseIds={day.exerciseIds} date={logDate} targetTotal={totalSets} />
+          )}
           {exercises.length > 0 && (
             <ul className="space-y-1 text-sm">
               {exercises.map((e) => (
@@ -290,12 +302,14 @@ function SplitDayCard({
 }
 
 function SelectedDaySection({
-  day, weightKg, goal, isRunDay, onClear,
+  day, weightKg, goal, isRunDay, logDate, setLogDate, onClear,
 }: {
   day: SplitDay
   weightKg: number
   goal: Parameters<typeof adjustedSets>[1]
   isRunDay: boolean
+  logDate: string
+  setLogDate: (date: string) => void
   onClear: () => void
 }) {
   const exercises = splitDayExercises(day)
@@ -331,6 +345,8 @@ function SelectedDaySection({
         </CardHeader>
       </Card>
 
+      {day.kind !== 'rest' && <LogDateBar logDate={logDate} setLogDate={setLogDate} />}
+
       {day.kind === 'rest' ? (
         <Card className="border-dashed">
           <CardContent className="flex items-center gap-3 pt-5 text-sm text-muted-foreground">
@@ -344,7 +360,7 @@ function SelectedDaySection({
             <span className="absolute -left-1 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground shadow-sm">
               {i + 1}
             </span>
-            <ExerciseCard ex={ex} weightKg={weightKg} goal={goal} />
+            <ExerciseCard ex={ex} weightKg={weightKg} goal={goal} logging />
           </div>
         ))
       )}
@@ -408,11 +424,13 @@ function MuscleGroupSectionCard({
 }
 
 function ExerciseCard({
-  ex, weightKg, goal,
+  ex, weightKg, goal, logging = false,
 }: {
   ex: Exercise
   weightKg: number
   goal: Parameters<typeof adjustedSets>[1]
+  /** Set logging only appears in the day view — the full library is a reference, not a session. */
+  logging?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const load = resolveLoad(ex, weightKg)
@@ -498,6 +516,8 @@ function ExerciseCard({
               </p>
             )}
 
+            {logging && <SetLogger ex={ex} targetSets={sets} />}
+
             <div className="mt-3 max-w-sm">
               <FormVideo videoId={ex.videoId} title={ex.name} />
             </div>
@@ -535,5 +555,55 @@ function ExerciseCard({
         )}
       </CardContent>
     </Card>
+  )
+}
+
+/**
+ * Which date the set logger writes to. Defaults to today, but a session that
+ * got logged the morning after still belongs to the day it happened, so the
+ * date is steppable rather than fixed.
+ */
+function LogDateBar({ logDate, setLogDate }: { logDate: string; setLogDate: (date: string) => void }) {
+  const isToday = logDate === todayISO()
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
+      <CalendarDays size={15} className="shrink-0 text-muted-foreground" />
+      <span className="text-sm font-medium">Logging to</span>
+      <button
+        type="button"
+        onClick={() => setLogDate(shiftISO(logDate, -1))}
+        aria-label="Previous day"
+        className="flex h-7 w-7 items-center justify-center rounded-md border border-border transition-colors hover:bg-accent"
+      >
+        <ChevronLeft size={14} />
+      </button>
+      <input
+        type="date"
+        value={logDate}
+        onChange={(e) => e.target.value && setLogDate(e.target.value)}
+        aria-label="Date to log sets against"
+        className="h-8 rounded-md border border-input bg-background px-2 text-sm tabular-nums focus:ring-2 focus:ring-ring focus:outline-none"
+      />
+      <button
+        type="button"
+        onClick={() => setLogDate(shiftISO(logDate, 1))}
+        aria-label="Next day"
+        className="flex h-7 w-7 items-center justify-center rounded-md border border-border transition-colors hover:bg-accent"
+      >
+        <ChevronRight size={14} />
+      </button>
+      {isToday ? (
+        <Badge tone="primary">Today</Badge>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setLogDate(todayISO())}
+          className="text-xs font-medium text-primary hover:underline"
+        >
+          Back to today
+        </button>
+      )}
+    </div>
   )
 }

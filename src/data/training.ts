@@ -44,6 +44,25 @@ export interface MuscleGroupSection {
   exercises: Exercise[]
 }
 
+export type SplitDayKind = 'push' | 'pull' | 'legs' | 'rest'
+
+export interface SplitDay {
+  /** Full day name, Monday first. */
+  day: string
+  /** Three-letter label used where space is tight (Week page). */
+  short: string
+  kind: SplitDayKind
+  title: string
+  focus: string
+  exerciseIds: string[]
+  /**
+   * Order in which this day claims one of the week's zone-2 runs (1 = kept
+   * even at one run per week). Days without a priority never get a run.
+   */
+  runPriority?: number
+  note?: string
+}
+
 export interface CardioSession {
   id: string
   name: string
@@ -712,6 +731,117 @@ export const MUSCLE_GROUPS: MuscleGroupSection[] = GROUP_ORDER.map((id) => ({
   focus: MUSCLE_GROUP_META[id].focus,
   exercises: ALL_EXERCISES.filter((e) => e.group === id),
 }))
+
+/** Fast id → exercise lookup for the weekly split and any future scheduling. */
+export const EXERCISE_BY_ID: Record<string, Exercise> = Object.fromEntries(
+  ALL_EXERCISES.map((e) => [e.id, e]),
+)
+
+/**
+ * The weekly schedule: a 6-day push/pull/legs split run twice, Sunday off.
+ *
+ * Why this shape rather than one muscle group per day:
+ *
+ * - Each muscle is trained twice a week. Muscle protein synthesis after a
+ *   session lasts roughly 24–48 h, so a once-a-week bro split leaves most of
+ *   the week unstimulated.
+ * - Per-session volume stays moderate (12–19 sets) because six lifting days
+ *   plus three runs is ten weekly training events — the volume has to leave
+ *   room to recover, especially after a long lifting layoff.
+ * - Saturday carries the heaviest leg session since weekends have the most
+ *   time and the next day is the rest day.
+ * - Sunday is a genuine rest day, not "light cardio". Recovery is where the
+ *   adaptation happens; it is load-bearing, not optional.
+ * - A and B days pair complementary movements (flat vs incline press, heavy
+ *   row vs chest-supported row, dumbbell stretch vs band squeeze for arms) so
+ *   the two weekly hits do not just repeat the same stress.
+ *
+ * Exercises not scheduled here (step-ups, sumo squat, band leg curl) stay in
+ * the library below as swaps for when a scheduled movement stalls or a joint
+ * complains.
+ */
+export const WEEKLY_SPLIT: SplitDay[] = [
+  {
+    day: 'Monday',
+    short: 'Mon',
+    kind: 'push',
+    title: 'Push A',
+    focus: 'Chest, shoulders, triceps',
+    exerciseIds: ['db-bench', 'db-shoulder-press', 'lateral-raise', 'db-skullcrusher', 'band-pushup'],
+    note: 'Flat press is the main lift — do it first, freshest.',
+  },
+  {
+    day: 'Tuesday',
+    short: 'Tue',
+    kind: 'pull',
+    title: 'Pull A',
+    focus: 'Back, rear delts, biceps',
+    exerciseIds: ['db-row', 'band-pulldown', 'band-face-pull', 'db-curl'],
+    runPriority: 2,
+    note: 'Run after lifting or at a different time of day, so pulling strength stays fresh.',
+  },
+  {
+    day: 'Wednesday',
+    short: 'Wed',
+    kind: 'legs',
+    title: 'Legs A',
+    focus: 'Squat pattern, hamstrings, core',
+    exerciseIds: ['goblet-squat', 'db-rdl', 'calf-raise', 'plank', 'band-pallof'],
+  },
+  {
+    day: 'Thursday',
+    short: 'Thu',
+    kind: 'push',
+    title: 'Push B',
+    focus: 'Overhead press, upper chest, triceps',
+    exerciseIds: ['db-ohp', 'incline-db-press', 'lateral-raise', 'band-pushdown'],
+    runPriority: 3,
+    note: 'Lateral raises twice a week is deliberate — side delts recover fast and respond to frequency.',
+  },
+  {
+    day: 'Friday',
+    short: 'Fri',
+    kind: 'pull',
+    title: 'Pull B',
+    focus: 'Strict rowing, lats, biceps',
+    exerciseIds: ['chest-supported-row', 'db-pullover', 'band-face-pull', 'band-curl'],
+  },
+  {
+    day: 'Saturday',
+    short: 'Sat',
+    kind: 'legs',
+    title: 'Legs B — heavy',
+    focus: 'Hinge pattern, glutes, single-leg work',
+    exerciseIds: ['db-deadlift', 'bulgarian-split', 'db-hip-thrust', 'single-leg-rdl', 'calf-raise', 'lying-leg-raise'],
+    runPriority: 1,
+    note: 'The longest session, placed on the weekend where there is time. Lift first, run after.',
+  },
+  {
+    day: 'Sunday',
+    short: 'Sun',
+    kind: 'rest',
+    title: 'Rest',
+    focus: 'Full recovery',
+    exerciseIds: [],
+    note: 'No lifting, no run. Walking is fine. This day is what makes the other six work.',
+  },
+]
+
+export function splitDayExercises(day: SplitDay): Exercise[] {
+  return day.exerciseIds.map((id) => EXERCISE_BY_ID[id]).filter(Boolean)
+}
+
+/**
+ * Which days actually get a run at the profile's weekly run count: run days
+ * are claimed in `runPriority` order, so fewer runs drop the lowest-priority
+ * days first (Saturday survives down to one run per week).
+ */
+export function runDays(runsPerWeek: number): Set<string> {
+  const prioritised = WEEKLY_SPLIT.filter((d) => d.runPriority != null).sort(
+    (a, b) => a.runPriority! - b.runPriority!,
+  )
+  return new Set(prioritised.slice(0, runsPerWeek).map((d) => d.day))
+}
 
 export const CARDIO_SESSIONS: CardioSession[] = [
   {

@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Timer, Repeat, ChevronDown, AlertTriangle, ArrowUpRight } from 'lucide-react'
+import { Timer, Repeat, ChevronDown, AlertTriangle, ArrowUpRight, Footprints, Moon } from 'lucide-react'
 import { usePlan } from '@/stores/profile'
 import {
-  MUSCLE_GROUPS, CARDIO_SESSIONS, PROGRESSION_RULES, WARMUP, GOAL_TRAINING, ACTIVITY_CARDIO, PULLUP_BAR_UPGRADES,
-  DUMBBELL_MAX_KG, resolveLoad, adjustedSets, estimatedMinutes,
-  type MuscleGroupSection, type Exercise, type Equipment,
+  MUSCLE_GROUPS, WEEKLY_SPLIT, CARDIO_SESSIONS, PROGRESSION_RULES, WARMUP, GOAL_TRAINING, ACTIVITY_CARDIO, PULLUP_BAR_UPGRADES,
+  DUMBBELL_MAX_KG, resolveLoad, adjustedSets, estimatedMinutes, splitDayExercises, runDays,
+  type MuscleGroupSection, type SplitDay, type Exercise, type Equipment,
 } from '@/data/training'
 import { GOAL_ADJUSTMENT } from '@/lib/nutrition'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,15 +26,17 @@ export function Training() {
 
   const goalTraining = GOAL_TRAINING[profile.goal]
   const cardio = ACTIVITY_CARDIO[profile.activity]
+  const runningDays = runDays(cardio.runsPerWeek)
 
   return (
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-bold tracking-tight">Training</h1>
         <p className="text-sm text-muted-foreground">
-          Built for dumbbells, a bench and bands — nothing here needs a gym. Exercises are grouped by
-          muscle so you can pick what to train each session. Loads are estimated from your{' '}
-          {profile.weightKg.toFixed(1)} kg; treat them as a first guess and adjust on feel.
+          Built for dumbbells, a bench and bands — nothing here needs a gym. The week runs a six-day
+          push/pull/legs split, each muscle trained twice; the library below has the form details.
+          Loads are estimated from your {profile.weightKg.toFixed(1)} kg; treat them as a first guess
+          and adjust on feel.
         </p>
       </header>
 
@@ -69,6 +71,23 @@ export function Training() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── The weekly split ── */}
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-lg font-bold tracking-tight">The week</h2>
+          <p className="text-sm text-muted-foreground">
+            Push / pull / legs, run twice. Saturday is the heavy leg day — the weekend has the time
+            for it — and Sunday is a full rest day, which is what makes six lifting days recoverable.
+            Runs go after lifting, or at a different time of day.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {WEEKLY_SPLIT.map((d) => (
+            <SplitDayCard key={d.day} day={d} goal={profile.goal} isRunDay={runningDays.has(d.day)} />
+          ))}
+        </div>
+      </div>
 
       {/* ── Jump to a muscle group ── */}
       <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
@@ -178,6 +197,62 @@ export function Training() {
   )
 }
 
+const KIND_LABEL: Record<SplitDay['kind'], string> = {
+  push: 'Push',
+  pull: 'Pull',
+  legs: 'Legs',
+  rest: 'Rest',
+}
+
+function SplitDayCard({
+  day, goal, isRunDay,
+}: {
+  day: SplitDay
+  goal: Parameters<typeof adjustedSets>[1]
+  isRunDay: boolean
+}) {
+  const exercises = splitDayExercises(day)
+  const totalSets = exercises.reduce((a, e) => a + adjustedSets(e, goal), 0)
+  const minutes = estimatedMinutes(exercises, goal)
+
+  return (
+    <Card className={cn(day.kind === 'rest' && 'border-dashed bg-accent/20')}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-sm">{day.day}</CardTitle>
+          <Badge tone={day.kind === 'rest' ? 'outline' : 'primary'}>
+            {day.kind === 'rest' && <Moon size={11} className="mr-1" />}
+            {KIND_LABEL[day.kind]}
+          </Badge>
+        </div>
+        <CardDescription>
+          {day.title}
+          {day.kind !== 'rest' && <> · {totalSets} sets · ~{minutes} min lifting</>}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2 pt-0">
+        {exercises.length > 0 && (
+          <ul className="space-y-1 text-sm">
+            {exercises.map((e) => (
+              <li key={e.id}>
+                <a href={`#ex-${e.id}`} className="text-foreground hover:text-primary hover:underline">
+                  {e.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+        {isRunDay && (
+          <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
+            <Footprints size={13} /> Zone 2 run · after lifting
+          </div>
+        )}
+        {day.note && <p className="text-xs leading-relaxed text-muted-foreground">{day.note}</p>}
+      </CardContent>
+    </Card>
+  )
+}
+
 function MuscleGroupSectionCard({
   group, weightKg, goal,
 }: {
@@ -222,7 +297,7 @@ function ExerciseCard({
   const pattern = patternFor(ex.id)
 
   return (
-    <Card>
+    <Card id={`ex-${ex.id}`} className="scroll-mt-4">
       <CardContent className="pt-5">
         <div className="flex gap-4">
           <div className="hidden shrink-0 flex-col items-center gap-1 sm:flex">

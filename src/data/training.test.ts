@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
-  MUSCLE_GROUPS, CARDIO_SESSIONS, GOAL_TRAINING, ACTIVITY_CARDIO, DUMBBELL_MAX_KG, DUMBBELL_STEP_KG,
-  resolveLoad, adjustedSets, estimatedMinutes, type Exercise, type MuscleGroup,
+  MUSCLE_GROUPS, WEEKLY_SPLIT, CARDIO_SESSIONS, GOAL_TRAINING, ACTIVITY_CARDIO, DUMBBELL_MAX_KG, DUMBBELL_STEP_KG,
+  EXERCISE_BY_ID, resolveLoad, adjustedSets, estimatedMinutes, splitDayExercises, runDays,
+  type Exercise, type MuscleGroup,
 } from './training'
 
 const ex = (over: Partial<Exercise> = {}): Exercise => ({
@@ -81,10 +82,84 @@ describe('cardio sessions', () => {
   })
 })
 
-describe('cardio sessions', () => {
-  it('has exactly two sessions, each with a positive duration and a short label', () => {
-    expect(CARDIO_SESSIONS).toHaveLength(2)
-    expect(CARDIO_SESSIONS.every((c) => c.minutes > 0 && c.what.trim())).toBe(true)
+describe('weekly split', () => {
+  const lifting = WEEKLY_SPLIT.filter((d) => d.kind !== 'rest')
+
+  it('covers all seven days, Monday first', () => {
+    expect(WEEKLY_SPLIT.map((d) => d.day)).toEqual([
+      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
+    ])
+  })
+
+  it('only schedules exercises that exist in the library', () => {
+    const missing = WEEKLY_SPLIT.flatMap((d) => d.exerciseIds).filter((id) => !EXERCISE_BY_ID[id])
+    expect(missing).toEqual([])
+  })
+
+  it('never repeats an exercise within a day', () => {
+    for (const d of WEEKLY_SPLIT) {
+      expect(new Set(d.exerciseIds).size).toBe(d.exerciseIds.length)
+    }
+  })
+
+  it('runs each session type exactly twice, with exactly one rest day', () => {
+    const kinds = WEEKLY_SPLIT.map((d) => d.kind)
+    expect(kinds.filter((k) => k === 'push')).toHaveLength(2)
+    expect(kinds.filter((k) => k === 'pull')).toHaveLength(2)
+    expect(kinds.filter((k) => k === 'legs')).toHaveLength(2)
+    expect(kinds.filter((k) => k === 'rest')).toHaveLength(1)
+  })
+
+  it('never schedules the same session type on consecutive days', () => {
+    for (let i = 1; i < WEEKLY_SPLIT.length; i++) {
+      if (WEEKLY_SPLIT[i].kind === 'rest') continue
+      expect(WEEKLY_SPLIT[i].kind).not.toBe(WEEKLY_SPLIT[i - 1].kind)
+    }
+  })
+
+  it('trains every major muscle group at least twice a week', () => {
+    const hits = new Map<MuscleGroup, number>()
+    for (const d of WEEKLY_SPLIT) {
+      const groups = new Set(splitDayExercises(d).map((e) => e.group))
+      for (const g of groups) hits.set(g, (hits.get(g) ?? 0) + 1)
+    }
+    for (const g of ['chest', 'back', 'shoulders', 'legs', 'biceps', 'triceps', 'core'] as const) {
+      expect(hits.get(g) ?? 0, `muscle group ${g}`).toBeGreaterThanOrEqual(2)
+    }
+  })
+
+  it('keeps per-session volume moderate at the recomp baseline', () => {
+    for (const d of lifting) {
+      const sets = splitDayExercises(d).reduce((a, e) => a + adjustedSets(e, 'recomp'), 0)
+      expect(sets, d.title).toBeGreaterThanOrEqual(12)
+      expect(sets, d.title).toBeLessThanOrEqual(20)
+    }
+  })
+
+  it('makes Saturday the biggest session, next to the rest day', () => {
+    const volume = (d: (typeof lifting)[number]) =>
+      splitDayExercises(d).reduce((a, e) => a + adjustedSets(e, 'recomp'), 0)
+    const saturday = WEEKLY_SPLIT.find((d) => d.day === 'Saturday')!
+    expect(lifting.every((d) => volume(d) <= volume(saturday))).toBe(true)
+    expect(WEEKLY_SPLIT.find((d) => d.day === 'Sunday')!.kind).toBe('rest')
+  })
+
+  it('gives the rest day no exercises', () => {
+    const rest = WEEKLY_SPLIT.find((d) => d.kind === 'rest')!
+    expect(splitDayExercises(rest)).toEqual([])
+  })
+
+  it('places runs by priority, keeping Saturday down to one run per week', () => {
+    expect(runDays(1)).toEqual(new Set(['Saturday']))
+    expect(runDays(2)).toEqual(new Set(['Saturday', 'Tuesday']))
+    expect(runDays(3)).toEqual(new Set(['Saturday', 'Tuesday', 'Thursday']))
+  })
+
+  it('never puts a run on the rest day or the heavy Wednesday leg day', () => {
+    const maxRuns = Math.max(...Object.values(ACTIVITY_CARDIO).map((a) => a.runsPerWeek))
+    const days = runDays(maxRuns)
+    expect(days.has('Sunday')).toBe(false)
+    expect(days.has('Wednesday')).toBe(false)
   })
 })
 

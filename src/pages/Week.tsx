@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
-import { ShoppingBasket, CalendarDays } from 'lucide-react'
+import { ShoppingBasket, CalendarDays, Dumbbell, Footprints, Moon } from 'lucide-react'
 import { usePlan } from '@/stores/profile'
 import { RECIPES, scaleAmount, scaleMacros, type Recipe } from '@/data/meals'
+import { WEEKLY_SPLIT, ACTIVITY_CARDIO, runDays } from '@/data/training'
 import { ageFrom, macroTargets } from '@/lib/nutrition'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -38,6 +39,7 @@ export function Week() {
   const age = ageFrom(profile.birthDate)
   const targets = macroTargets(profile, age)
   const week = useMemo(() => buildWeek(favourites), [favourites])
+  const runningDays = runDays(ACTIVITY_CARDIO[profile.activity].runsPerWeek)
 
   /** Roll every cooked ingredient up into one shopping list. */
   const shopping = useMemo(() => {
@@ -60,13 +62,14 @@ export function Week() {
       <header>
         <h1 className="text-2xl font-bold tracking-tight">Your week</h1>
         <p className="text-sm text-muted-foreground">
-          A full seven days of meals. Star meals on the Meals page and they move to the front of the
-          rotation.
+          A full seven days of meals and training. Star meals on the Meals page and they move to the
+          front of the rotation; the training split is detailed on the Training page.
         </p>
       </header>
 
       <div className="grid gap-3 lg:grid-cols-2">
-        {week.map((d) => {
+        {week.map((d, i) => {
+          const session = WEEKLY_SPLIT[i]
           const b = scaleMacros(d.breakfast, profile.weightKg)
           const l = scaleMacros(d.lunch, profile.weightKg)
           const n = scaleMacros(d.dinner, profile.weightKg)
@@ -85,6 +88,22 @@ export function Week() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-1.5 text-sm">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border/50 pb-1.5 text-xs text-muted-foreground">
+                  {session.kind === 'rest' ? (
+                    <span className="flex items-center gap-1.5">
+                      <Moon size={12} /> Rest day
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5">
+                      <Dumbbell size={12} /> {session.title} — {session.focus.toLowerCase()}
+                    </span>
+                  )}
+                  {runningDays.has(session.day) && (
+                    <span className="flex items-center gap-1.5">
+                      <Footprints size={12} /> Zone 2 run
+                    </span>
+                  )}
+                </div>
                 <MealLine slot="Breakfast" r={d.breakfast} kcal={b.kcal} protein={b.proteinG} />
                 <MealLine slot="Lunch" r={d.lunch} kcal={l.kcal} protein={l.proteinG} out />
                 <MealLine slot="Dinner" r={d.dinner} kcal={n.kcal} protein={n.proteinG} />

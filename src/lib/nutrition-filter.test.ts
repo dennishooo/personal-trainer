@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { REFERENCE_KG } from '@/data/meals'
 import { NUTRITION_GROUPS, type NutritionGroup } from '@/data/nutrition-reference'
 import {
   activeFilterCount,
@@ -11,7 +12,10 @@ import {
   LEAN_MAX_FAT,
   MEDIUM_MAX_FAT,
   PROTEIN_SERVING_G,
+  portionMacros,
+  portionScales,
   proteinPerKcal,
+  scalePortion,
   sortItems,
   type FilterState,
 } from './nutrition-filter'
@@ -59,6 +63,70 @@ describe('costPerProteinServing', () => {
     expect(
       costPerProteinServing({ name: 'Oyster sauce', icon: 'oil', kcal: 51, proteinG: 1.4, carbG: 10.9, fatG: 0.3, pricePer100gHKD: 5, portion: '1 tbsp' }),
     ).toBeNull()
+  })
+})
+
+describe('scalePortion', () => {
+  const chicken = { name: 'Chicken breast', icon: 'meat' as const, kcal: 120, proteinG: 22.5, carbG: 0, fatG: 2.6, portionG: 170 }
+  const oats = { ...chicken, name: 'Oats', portionG: 60, portionNote: 'dry' }
+  const oil = { name: 'Oil', icon: 'droplet' as const, kcal: 884, proteinG: 0, carbG: 0, fatG: 100, portion: '1 tbsp (14 g)' }
+
+  it('returns the reference portion unchanged at the reference weight', () => {
+    expect(scalePortion(chicken, REFERENCE_KG)).toBe('170 g')
+  })
+
+  it('grows and shrinks the portion with bodyweight', () => {
+    // 170 g at 78.8 kg → ~194 g at 90 kg, ~130 g at 60 kg (rounded to 5 g).
+    expect(scalePortion(chicken, 90)).toBe('195 g')
+    expect(scalePortion(chicken, 60)).toBe('130 g')
+  })
+
+  it('rounds to 5 g so it never implies false precision', () => {
+    const grams = Number(scalePortion(chicken, 83.3).replace(' g', ''))
+    expect(grams % 5).toBe(0)
+  })
+
+  it('keeps the qualifier on scaled weights', () => {
+    expect(scalePortion(oats, REFERENCE_KG)).toBe('60 g dry')
+    expect(scalePortion(oats, 95)).toMatch(/^\d+ g dry$/)
+  })
+
+  it('leaves fixed servings untouched at any weight', () => {
+    expect(scalePortion(oil, 60)).toBe('1 tbsp (14 g)')
+    expect(scalePortion(oil, 120)).toBe('1 tbsp (14 g)')
+  })
+
+  it('never scales a portion below a usable 5 g', () => {
+    const pinch = { ...chicken, portionG: 10 }
+    expect(scalePortion(pinch, 20)).toBe('5 g')
+  })
+})
+
+describe('portionMacros', () => {
+  const chicken = { name: 'Chicken breast', icon: 'meat' as const, kcal: 120, proteinG: 22.5, carbG: 0, fatG: 2.6, portionG: 170 }
+
+  it('converts per-100g values to the actual serving', () => {
+    // 170 g of 120 kcal/100 g → 204 kcal, 38 g protein.
+    const m = portionMacros(chicken, REFERENCE_KG)!
+    expect(m.kcal).toBe(204)
+    expect(m.proteinG).toBe(38)
+  })
+
+  it('tracks bodyweight', () => {
+    const light = portionMacros(chicken, 60)!
+    const heavy = portionMacros(chicken, 95)!
+    expect(heavy.kcal).toBeGreaterThan(light.kcal)
+  })
+
+  it('returns null for fixed servings, where a scaled macro would be meaningless', () => {
+    expect(portionMacros({ name: 'Oil', icon: 'droplet', kcal: 884, proteinG: 0, carbG: 0, fatG: 100, portion: '1 tbsp' }, 80)).toBeNull()
+  })
+})
+
+describe('portionScales', () => {
+  it('distinguishes scalable from fixed servings', () => {
+    expect(portionScales({ name: 'A', icon: 'meat', kcal: 1, proteinG: 1, carbG: 0, fatG: 0, portionG: 100 })).toBe(true)
+    expect(portionScales({ name: 'B', icon: 'meat', kcal: 1, proteinG: 1, carbG: 0, fatG: 0, portion: '1 tbsp' })).toBe(false)
   })
 })
 
@@ -238,11 +306,32 @@ describe('the shipped dataset', () => {
     }
   })
 
-  it('gives every item a non-negative macro profile and a portion', () => {
+  it('gives every item a non-negative macro profile and exactly one portion form', () => {
     for (const item of NUTRITION_GROUPS.flatMap((g) => g.items)) {
       expect(item.kcal, item.name).toBeGreaterThanOrEqual(0)
       expect(Math.min(item.proteinG, item.carbG, item.fatG), item.name).toBeGreaterThanOrEqual(0)
-      expect(item.portion.length, item.name).toBeGreaterThan(0)
+      // Exactly one of the two portion representations, never both or neither.
+      const hasScalable = item.portionG !== undefined
+      const hasFixed = (item.portion?.length ?? 0) > 0
+      expect(hasScalable !== hasFixed, `${item.name}: portionG/portion must be exclusive`).toBe(true)
+      if (hasScalable) expect(item.portionG, item.name).toBeGreaterThan(0)
     }
+  })
+
+  it('only attaches portionNote to scalable portions', () => {
+    for (const item of NUTRITION_GROUPS.flatMap((g) => g.items)) {
+      if (item.portionNote !== undefined) expect(item.portionG, item.name).toBeDefined()
+    }
+  })
+
+  it('scales bulk foods but not seasonings or countable units', () => {
+    const byName = (n: string) => NUTRITION_GROUPS.flatMap((g) => g.items).find((i) => i.name === n)!
+    // Bulk protein and grains grow with the user.
+    expect(portionScales(byName('Chicken breast, skinless'))).toBe(true)
+    expect(portionScales(byName('Broccoli'))).toBe(true)
+    // A tablespoon is a tablespoon regardless of who is eating.
+    expect(portionScales(byName('Neutral cooking oil'))).toBe(false)
+    expect(portionScales(byName('Garlic'))).toBe(false)
+    expect(portionScales(byName('Egg, whole large'))).toBe(false)
   })
 })

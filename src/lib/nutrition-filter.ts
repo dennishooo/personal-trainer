@@ -4,6 +4,7 @@
  * Kept separate from the page so the predicates stay unit-testable: the
  * component only decides which keys are active, never what they mean.
  */
+import { REFERENCE_KG } from '@/data/meals'
 import type { Leanness, NutritionGroup, NutritionItem } from '@/data/nutrition-reference'
 
 export type SortKey = 'name' | 'protein' | 'kcal' | 'carb' | 'fat' | 'density' | 'cost'
@@ -36,6 +37,47 @@ const MACRO_TESTS: Record<MacroKey, (it: NutritionItem) => boolean> = {
   // Guard zero-protein items (oils, sugars) so they never divide by zero.
   efficient: (it) => it.proteinG > 0 && it.kcal / it.proteinG <= 5,
   'in-plan': (it) => it.inPlan === true,
+}
+
+/**
+ * Portion text for an item at a given bodyweight.
+ *
+ * Bulk foods (`portionG`) scale linearly from the REFERENCE_KG serving, so a
+ * heavier user sees a bigger plate. Seasonings and countable units keep their
+ * fixed text — scaling a clove of garlic or a tablespoon of oil with bodyweight
+ * would be arithmetic without meaning.
+ *
+ * Rounded to 5 g because nobody weighs chicken to the gram, and unrounded
+ * output would imply a precision the underlying reference data doesn't have.
+ */
+export function scalePortion(it: NutritionItem, weightKg: number): string {
+  if (it.portionG === undefined) return it.portion ?? ''
+  const grams = Math.max(5, Math.round((it.portionG * weightKg) / REFERENCE_KG / 5) * 5)
+  return it.portionNote ? `${grams} g ${it.portionNote}` : `${grams} g`
+}
+
+/** True when this item's portion responds to bodyweight. */
+export function portionScales(it: NutritionItem): boolean {
+  return it.portionG !== undefined
+}
+
+/**
+ * Macros for the actual serving, not per 100 g — what you'd log after eating it.
+ * Only meaningful for gram-based portions, so returns null for fixed servings.
+ */
+export function portionMacros(
+  it: NutritionItem,
+  weightKg: number,
+): { kcal: number; proteinG: number; carbG: number; fatG: number } | null {
+  if (it.portionG === undefined) return null
+  const grams = (it.portionG * weightKg) / REFERENCE_KG
+  const f = grams / 100
+  return {
+    kcal: Math.round(it.kcal * f),
+    proteinG: Math.round(it.proteinG * f),
+    carbG: Math.round(it.carbG * f),
+    fatG: Math.round(it.fatG * f),
+  }
 }
 
 /** Grams of protein bought per 100 kcal — the "is this worth the calories" number. */

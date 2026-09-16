@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, Plus, SlidersHorizontal } from 'lucide-react'
 import { Icon } from '@/components/icons'
+import { REFERENCE_KG } from '@/data/meals'
 import { NUTRITION_GROUPS, type Leanness, type NutritionItem } from '@/data/nutrition-reference'
 import {
   activeFilterCount,
@@ -11,6 +12,8 @@ import {
   LEANNESS_LABELS,
   MACRO_LABELS,
   PROTEIN_SERVING_G,
+  portionMacros,
+  scalePortion,
   toFilterState,
   type MacroKey,
   type SortKey,
@@ -19,6 +22,7 @@ import { Badge } from '@/components/ui/badge'
 import { BackToTop } from '@/components/BackToTop'
 import { INGREDIENT_DRAG, MacroCalculator } from '@/components/MacroCalculator'
 import { usePicks } from '@/stores/picks'
+import { usePlan } from '@/stores/profile'
 import { useUi } from '@/stores/ui'
 import { cn } from '@/lib/utils'
 
@@ -65,6 +69,26 @@ function ProteinCostCell({ item }: { item: NutritionItem }) {
   )
 }
 
+/**
+ * The scaled serving, with that serving's own macros on hover.
+ *
+ * The macro columns are per 100 g but this column is a real portion, so the
+ * two are on different bases; the title spells out what the serving actually
+ * costs you. Fixed servings (a tablespoon, one egg) get no tooltip — their
+ * gram weight is already in the label.
+ */
+function PortionCell({ item, weightKg }: { item: NutritionItem; weightKg: number }) {
+  const m = portionMacros(item, weightKg)
+  return (
+    <td
+      className="whitespace-nowrap text-xs text-muted-foreground"
+      title={m ? `this serving: ${m.kcal} kcal · ${m.proteinG} g protein · ${m.carbG} g carb · ${m.fatG} g fat` : undefined}
+    >
+      {scalePortion(item, weightKg)}
+    </td>
+  )
+}
+
 function Chip({
   active,
   onClick,
@@ -100,6 +124,7 @@ export function Nutrition() {
   const setShowFilters = useUi((s) => s.setNutritionFiltersOpen)
   const [dragActive, setDragActive] = useState(false)
   const addPick = usePicks((s) => s.addPick)
+  const profile = usePlan((s) => s.profile)
   const controlsRef = useRef<HTMLDivElement>(null)
   const [controlsH, setControlsH] = useState(0)
 
@@ -131,9 +156,10 @@ export function Nutrition() {
           <Badge tone="outline" className="align-middle text-[10px]">
             in plan
           </Badge>
-          ; the rest are for ordering out or at the butcher. Tap <Plus size={12} className="inline align-[-1px]" /> on
-          any row — or drag it — to build a meal in the calculator and see it against your daily
-          target.
+          ; the rest are for ordering out or at the butcher. Portions track your current{' '}
+          <strong className="font-medium text-foreground">{profile.weightKg.toFixed(1)} kg</strong>. Tap{' '}
+          <Plus size={12} className="inline align-[-1px]" /> on any row — or drag it — to build a meal
+          in the calculator and see it against your daily target.
         </p>
       </header>
 
@@ -364,7 +390,7 @@ export function Nutrition() {
                         {item.pricePer100gHKD === undefined ? '—' : `$${item.pricePer100gHKD}`}
                       </td>
                       <ProteinCostCell item={item} />
-                      <td className="whitespace-nowrap text-xs text-muted-foreground">{item.portion}</td>
+                      <PortionCell item={item} weightKg={profile.weightKg} />
                       <td className="!text-left text-xs text-muted-foreground">{item.note ?? '—'}</td>
                     </tr>
                   ))}
@@ -389,6 +415,13 @@ export function Nutrition() {
         <p>
           <strong className="text-foreground">Leanness dots</strong> grade fat per 100 g: lean under
           8 g, medium 8–17 g, fatty over 17 g.
+        </p>
+        <p>
+          <strong className="text-foreground">Portions</strong> scale with the bodyweight in your
+          profile, from servings quoted at {REFERENCE_KG} kg, rounded to 5 g. Seasonings and
+          countable units (a tablespoon of oil, one egg, a clove of garlic) stay fixed — bodyweight
+          doesn't change what a tablespoon is. Hover a scaled portion for that serving's own macros;
+          the columns themselves are per 100 g.
         </p>
         <p>
           <strong className="text-foreground">Protein cost</strong> is HKD to buy{' '}

@@ -165,8 +165,8 @@ describe('filterDishes', () => {
 
 describe('DISHES dataset', () => {
   // The README quotes this count; bump both together.
-  it('has 71 dishes', () => {
-    expect(DISHES).toHaveLength(71)
+  it('has 300 dishes', () => {
+    expect(DISHES).toHaveLength(300)
   })
 
   it('has unique ids', () => {

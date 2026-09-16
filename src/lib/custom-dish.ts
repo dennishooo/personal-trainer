@@ -1,7 +1,7 @@
 /**
  * User-created dishes: validation, defaulting and merging with the shipped set.
  *
- * The 71 rows in src/data/dishes.ts are a curated reference and stay read-only;
+ * The 300 rows in src/data/dishes.ts are a curated reference and stay read-only;
  * anything the user adds lives in its own store and is merged on read. Pure
  * functions only, so the rules are testable without React or localStorage.
  */
@@ -184,7 +184,7 @@ export function dishFromDraft(draft: DishDraft, id: string): Dish {
 
 /**
  * The full dish list the app reads from. Custom dishes come first so a newly
- * added one is visible without scrolling past 71 built-ins.
+ * added one is visible without scrolling past 300 built-ins.
  */
 export function allDishes(custom: Dish[], builtIn: Dish[] = DISHES): Dish[] {
   return [...custom, ...builtIn]

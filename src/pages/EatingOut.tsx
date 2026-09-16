@@ -341,8 +341,9 @@ export function EatingOut() {
       )}
 
       <p className="text-xs text-muted-foreground">
-        Figures are typical restaurant portions from HK Centre for Food Safety data and published
-        menus — treat them as ±15%. Two branches of the same shop vary more than that.
+        Figures are typical restaurant portions, from HK Centre for Food Safety data and published
+        menus where available and estimated from the cooking method otherwise — treat them as ±15%.
+        Two branches of the same shop vary more than that.
       </p>
     </div>
   )

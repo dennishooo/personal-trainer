@@ -19,7 +19,7 @@ doses, and starting loads in the gym.
 | **Today** | Calorie and macro targets, BMI against Asian-Pacific cut-offs, the trend verdict, weight logging and chart |
 | **Week** | Seven days of meals and training, plus a consolidated shopping list |
 | **Meals** | 27 recipes with scaled portions and step-by-step method; ordering guides for eating out |
-| **Eating out** | 71 Hong Kong restaurant dishes across nine cuisines, priced and costed as served — tap to log them against the day's targets, with per-date history, a sodium tally and an ordering tweak per dish. Add your own dishes, or duplicate a built-in and edit the copy |
+| **Eating out** | 300 Hong Kong restaurant dishes across nine cuisines, priced and costed as served — tap to log them against the day's targets, with per-date history, a sodium tally and an ordering tweak per dish. Add your own dishes, or duplicate a built-in and edit the copy |
 | **Training** | 6-day push/pull/legs split (each muscle 2×/week, Sunday rest) — tap a day to see just that session's exercises in order; form breakdowns and movement diagrams. Log each set's weight and reps as you go: the card shows last session's numbers, tells you when every set has hit the top of the rep range and it's time to add 2 kg, and charts estimated 1RM over time |
 | **Supplements** | Evidence-tiered list with HK sourcing and monthly cost, grouped into a daily schedule |
 | **Profile** | Inputs, goal, activity level, and a full breakdown of how each number was derived |

@@ -19,7 +19,7 @@ doses, and starting loads in the gym.
 | **Today** | Calorie and macro targets, BMI against Asian-Pacific cut-offs, the trend verdict, weight logging and chart |
 | **Week** | Seven days of meals and training, plus a consolidated shopping list |
 | **Meals** | 27 recipes with scaled portions and step-by-step method; ordering guides for eating out |
-| **Training** | 4-day upper/lower split for a home setup, form breakdowns, movement diagrams |
+| **Training** | 6-day push/pull/legs split (each muscle 2×/week, Sunday rest) for a home setup, form breakdowns, movement diagrams |
 | **Supplements** | Evidence-tiered list with HK sourcing and monthly cost, grouped into a daily schedule |
 | **Profile** | Inputs, goal, activity level, and a full breakdown of how each number was derived |
 

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { EMPTY_STORED_FILTERS, type StoredFilters } from '@/lib/nutrition-filter'
 import type { Cuisine, Slot } from '@/data/meals'
+import type { DishCuisine, DishVerdict } from '@/data/dishes'
 
 /**
  * Cross-page UI choices — active tab, filters, sorts — persisted so nothing
@@ -13,6 +14,7 @@ export type TabId =
   | 'dashboard'
   | 'week'
   | 'meals'
+  | 'eating-out'
   | 'nutrition'
   | 'training'
   | 'supplements'
@@ -24,17 +26,25 @@ export interface MealsFilters {
   query: string
 }
 
+export interface DishFiltersState {
+  query: string
+  cuisine: DishCuisine | 'all'
+  verdict: DishVerdict | 'all'
+}
+
 interface UiState {
   tab: TabId
   nutrition: StoredFilters
   nutritionFiltersOpen: boolean
   meals: MealsFilters
+  dishes: DishFiltersState
   /** Day selected on the Training page (`'Monday'`…), or null for the full library view. */
   trainingDay: string | null
   setTab: (tab: TabId) => void
   setNutrition: (patch: Partial<StoredFilters>) => void
   setNutritionFiltersOpen: (open: boolean) => void
   setMeals: (patch: Partial<MealsFilters>) => void
+  setDishes: (patch: Partial<DishFiltersState>) => void
   setTrainingDay: (day: string | null) => void
 }
 
@@ -45,12 +55,14 @@ export const useUi = create<UiState>()(
       nutrition: EMPTY_STORED_FILTERS,
       nutritionFiltersOpen: false,
       meals: { slot: 'breakfast', cuisine: 'all', query: '' },
+      dishes: { query: '', cuisine: 'all', verdict: 'all' },
       trainingDay: null,
       setTab: (tab) => set({ tab }),
       setTrainingDay: (day) => set({ trainingDay: day }),
       setNutrition: (patch) => set((s) => ({ nutrition: { ...s.nutrition, ...patch } })),
       setNutritionFiltersOpen: (open) => set({ nutritionFiltersOpen: open }),
       setMeals: (patch) => set((s) => ({ meals: { ...s.meals, ...patch } })),
+      setDishes: (patch) => set((s) => ({ dishes: { ...s.dishes, ...patch } })),
     }),
     { name: 'ui-prefs-v1' },
   ),

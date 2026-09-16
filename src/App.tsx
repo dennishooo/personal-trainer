@@ -1,11 +1,12 @@
 import { useEffect } from 'react'
-import { LayoutDashboard, UtensilsCrossed, Apple, Pill, Dumbbell, CalendarRange, User, Moon, Sun } from 'lucide-react'
+import { LayoutDashboard, UtensilsCrossed, Apple, Pill, Dumbbell, CalendarRange, User, Moon, Sun, Store } from 'lucide-react'
 import { useTheme, applyTheme } from '@/stores/theme'
 import { useSync } from '@/stores/sync'
 import { useUi } from '@/stores/ui'
 import { SignInScreen } from '@/components/SignInScreen'
 import { Dashboard } from '@/pages/Dashboard'
 import { Meals } from '@/pages/Meals'
+import { EatingOut } from '@/pages/EatingOut'
 import { Supplements } from '@/pages/Supplements'
 import { Training } from '@/pages/Training'
 import { Week } from '@/pages/Week'
@@ -17,9 +18,10 @@ const TABS = [
   { id: 'dashboard', label: 'Today', icon: LayoutDashboard, Page: Dashboard },
   { id: 'week', label: 'Week', icon: CalendarRange, Page: Week },
   { id: 'meals', label: 'Meals', icon: UtensilsCrossed, Page: Meals },
+  { id: 'eating-out', label: 'Eating out', shortLabel: 'Dining', icon: Store, Page: EatingOut },
   { id: 'nutrition', label: 'Nutrition', icon: Apple, Page: Nutrition },
   { id: 'training', label: 'Training', icon: Dumbbell, Page: Training },
-  { id: 'supplements', label: 'Supplements', icon: Pill, Page: Supplements },
+  { id: 'supplements', label: 'Supplements', shortLabel: 'Supps', icon: Pill, Page: Supplements },
   { id: 'profile', label: 'Profile', icon: User, Page: ProfilePage },
 ] as const
 
@@ -104,7 +106,7 @@ export default function App() {
             )}
           >
             <t.icon size={17} />
-            {t.label}
+            {'shortLabel' in t ? t.shortLabel : t.label}
           </button>
         ))}
       </nav>

@@ -29,10 +29,13 @@ interface UiState {
   nutrition: StoredFilters
   nutritionFiltersOpen: boolean
   meals: MealsFilters
+  /** Day selected on the Training page (`'Monday'`…), or null for the full library view. */
+  trainingDay: string | null
   setTab: (tab: TabId) => void
   setNutrition: (patch: Partial<StoredFilters>) => void
   setNutritionFiltersOpen: (open: boolean) => void
   setMeals: (patch: Partial<MealsFilters>) => void
+  setTrainingDay: (day: string | null) => void
 }
 
 export const useUi = create<UiState>()(
@@ -42,7 +45,9 @@ export const useUi = create<UiState>()(
       nutrition: EMPTY_STORED_FILTERS,
       nutritionFiltersOpen: false,
       meals: { slot: 'breakfast', cuisine: 'all', query: '' },
+      trainingDay: null,
       setTab: (tab) => set({ tab }),
+      setTrainingDay: (day) => set({ trainingDay: day }),
       setNutrition: (patch) => set((s) => ({ nutrition: { ...s.nutrition, ...patch } })),
       setNutritionFiltersOpen: (open) => set({ nutritionFiltersOpen: open }),
       setMeals: (patch) => set((s) => ({ meals: { ...s.meals, ...patch } })),

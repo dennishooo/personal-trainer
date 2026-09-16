@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { Timer, Repeat, ChevronDown, AlertTriangle, ArrowUpRight, Footprints, Moon } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Timer, Repeat, ChevronDown, AlertTriangle, ArrowUpRight, ArrowUp, Footprints, Moon, X } from 'lucide-react'
 import { usePlan } from '@/stores/profile'
+import { useUi } from '@/stores/ui'
 import {
   MUSCLE_GROUPS, WEEKLY_SPLIT, CARDIO_SESSIONS, PROGRESSION_RULES, WARMUP, GOAL_TRAINING, ACTIVITY_CARDIO, PULLUP_BAR_UPGRADES,
   DUMBBELL_MAX_KG, resolveLoad, adjustedSets, estimatedMinutes, splitDayExercises, runDays,
@@ -23,10 +24,12 @@ const EQUIPMENT_LABEL: Record<Equipment, string> = {
 
 export function Training() {
   const { profile } = usePlan()
+  const { trainingDay, setTrainingDay } = useUi()
 
   const goalTraining = GOAL_TRAINING[profile.goal]
   const cardio = ACTIVITY_CARDIO[profile.activity]
   const runningDays = runDays(cardio.runsPerWeek)
+  const selectedDay = WEEKLY_SPLIT.find((d) => d.day === trainingDay) ?? null
 
   return (
     <div className="space-y-6">
@@ -79,34 +82,44 @@ export function Training() {
           <p className="text-sm text-muted-foreground">
             Push / pull / legs, run twice. Saturday is the heavy leg day — the weekend has the time
             for it — and Sunday is a full rest day, which is what makes six lifting days recoverable.
-            Runs go after lifting, or at a different time of day.
+            <strong className="font-medium text-foreground"> Tap a day to see its exercises</strong>,
+            with form videos, in the order you do them.
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {WEEKLY_SPLIT.map((d) => (
-            <SplitDayCard key={d.day} day={d} goal={profile.goal} isRunDay={runningDays.has(d.day)} />
+            <SplitDayCard
+              key={d.day}
+              day={d}
+              goal={profile.goal}
+              isRunDay={runningDays.has(d.day)}
+              selected={selectedDay?.day === d.day}
+              onSelect={() => setTrainingDay(selectedDay?.day === d.day ? null : d.day)}
+            />
           ))}
         </div>
       </div>
 
-      {/* ── Jump to a muscle group ── */}
-      <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-        {MUSCLE_GROUPS.map((g) => (
+      {/* ── Jump to a muscle group (full-library view only) ── */}
+      {!selectedDay && (
+        <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {MUSCLE_GROUPS.map((g) => (
+            <a
+              key={g.id}
+              href={`#group-${g.id}`}
+              className="shrink-0 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-accent"
+            >
+              {g.name}
+            </a>
+          ))}
           <a
-            key={g.id}
-            href={`#group-${g.id}`}
+            href="#cardio"
             className="shrink-0 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-accent"
           >
-            {g.name}
+            Cardio
           </a>
-        ))}
-        <a
-          href="#cardio"
-          className="shrink-0 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-accent"
-        >
-          Cardio
-        </a>
-      </div>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -124,9 +137,19 @@ export function Training() {
         </CardContent>
       </Card>
 
-      {MUSCLE_GROUPS.map((g) => (
-        <MuscleGroupSectionCard key={g.id} group={g} weightKg={profile.weightKg} goal={profile.goal} />
-      ))}
+      {selectedDay ? (
+        <SelectedDaySection
+          day={selectedDay}
+          weightKg={profile.weightKg}
+          goal={profile.goal}
+          isRunDay={runningDays.has(selectedDay.day)}
+          onClear={() => setTrainingDay(null)}
+        />
+      ) : (
+        MUSCLE_GROUPS.map((g) => (
+          <MuscleGroupSectionCard key={g.id} group={g} weightKg={profile.weightKg} goal={profile.goal} />
+        ))
+      )}
 
       <div id="cardio" className="space-y-3 scroll-mt-4">
         <h2 className="text-lg font-bold tracking-tight">Cardio</h2>
@@ -193,6 +216,8 @@ export function Training() {
           ))}
         </CardContent>
       </Card>
+
+      <BackToTop />
     </div>
   )
 }
@@ -205,51 +230,149 @@ const KIND_LABEL: Record<SplitDay['kind'], string> = {
 }
 
 function SplitDayCard({
-  day, goal, isRunDay,
+  day, goal, isRunDay, selected, onSelect,
 }: {
   day: SplitDay
   goal: Parameters<typeof adjustedSets>[1]
   isRunDay: boolean
+  selected: boolean
+  onSelect: () => void
 }) {
   const exercises = splitDayExercises(day)
   const totalSets = exercises.reduce((a, e) => a + adjustedSets(e, goal), 0)
   const minutes = estimatedMinutes(exercises, goal)
 
   return (
-    <Card className={cn(day.kind === 'rest' && 'border-dashed bg-accent/20')}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-sm">{day.day}</CardTitle>
-          <Badge tone={day.kind === 'rest' ? 'outline' : 'primary'}>
-            {day.kind === 'rest' && <Moon size={11} className="mr-1" />}
-            {KIND_LABEL[day.kind]}
-          </Badge>
-        </div>
-        <CardDescription>
-          {day.title}
-          {day.kind !== 'rest' && <> · {totalSets} sets · ~{minutes} min lifting</>}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-2 pt-0">
-        {exercises.length > 0 && (
-          <ul className="space-y-1 text-sm">
-            {exercises.map((e) => (
-              <li key={e.id}>
-                <a href={`#ex-${e.id}`} className="text-foreground hover:text-primary hover:underline">
-                  {e.name}
-                </a>
-              </li>
-            ))}
-          </ul>
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className="h-full w-full text-left"
+    >
+      <Card
+        className={cn(
+          'h-full transition-colors hover:border-primary/50',
+          day.kind === 'rest' && 'border-dashed bg-accent/20',
+          selected && 'border-primary ring-1 ring-primary',
         )}
-        {isRunDay && (
-          <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
-            <Footprints size={13} /> Zone 2 run · after lifting
+      >
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-sm">{day.day}</CardTitle>
+            <Badge tone={day.kind === 'rest' ? 'outline' : 'primary'}>
+              {day.kind === 'rest' && <Moon size={11} className="mr-1" />}
+              {KIND_LABEL[day.kind]}
+            </Badge>
           </div>
-        )}
-        {day.note && <p className="text-xs leading-relaxed text-muted-foreground">{day.note}</p>}
-      </CardContent>
-    </Card>
+          <CardDescription>
+            {day.title}
+            {day.kind !== 'rest' && <> · {totalSets} sets · ~{minutes} min lifting</>}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 pt-0">
+          {exercises.length > 0 && (
+            <ul className="space-y-1 text-sm">
+              {exercises.map((e) => (
+                <li key={e.id}>{e.name}</li>
+              ))}
+            </ul>
+          )}
+          {isRunDay && (
+            <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
+              <Footprints size={13} /> Zone 2 run · after lifting
+            </div>
+          )}
+          {day.note && <p className="text-xs leading-relaxed text-muted-foreground">{day.note}</p>}
+        </CardContent>
+      </Card>
+    </button>
+  )
+}
+
+function SelectedDaySection({
+  day, weightKg, goal, isRunDay, onClear,
+}: {
+  day: SplitDay
+  weightKg: number
+  goal: Parameters<typeof adjustedSets>[1]
+  isRunDay: boolean
+  onClear: () => void
+}) {
+  const exercises = splitDayExercises(day)
+  const totalSets = exercises.reduce((a, e) => a + adjustedSets(e, goal), 0)
+  const minutes = estimatedMinutes(exercises, goal)
+
+  return (
+    <div className="space-y-3">
+      <Card className="border-primary/40 bg-accent/25">
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle>
+              {day.day} — {day.title}
+            </CardTitle>
+            <button
+              type="button"
+              onClick={onClear}
+              className="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/40 hover:bg-accent"
+            >
+              <X size={13} /> Show full library
+            </button>
+          </div>
+          <CardDescription>
+            {day.kind === 'rest' ? (
+              day.focus
+            ) : (
+              <>
+                {day.focus} · {exercises.length} exercises in order · {totalSets} sets · ~{minutes} min
+                lifting{isRunDay && <> · zone 2 run after</>}
+              </>
+            )}
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      {day.kind === 'rest' ? (
+        <Card className="border-dashed">
+          <CardContent className="flex items-center gap-3 pt-5 text-sm text-muted-foreground">
+            <Moon size={18} className="shrink-0" />
+            <p>{day.note}</p>
+          </CardContent>
+        </Card>
+      ) : (
+        exercises.map((ex, i) => (
+          <div key={ex.id} className="relative">
+            <span className="absolute -left-1 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground shadow-sm">
+              {i + 1}
+            </span>
+            <ExerciseCard ex={ex} weightKg={weightKg} goal={goal} />
+          </div>
+        ))
+      )}
+    </div>
+  )
+}
+
+/** Floating scroll-to-top control — the page is long once exercise cards render. */
+function BackToTop() {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 600)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  if (!visible) return null
+  return (
+    <button
+      type="button"
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      aria-label="Back to top"
+      className="fixed bottom-20 right-4 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card shadow-md transition-colors hover:border-primary/50 hover:bg-accent lg:bottom-6 lg:right-8"
+    >
+      <ArrowUp size={18} />
+    </button>
   )
 }
 

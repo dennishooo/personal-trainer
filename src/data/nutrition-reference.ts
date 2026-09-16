@@ -34,8 +34,18 @@ export interface NutritionItem {
   fatG: number
   /** HKD per 100 g edible weight. Only set for protein sources; see header. */
   pricePer100gHKD?: number
-  /** Serving used in the meal plan, or a typical serving for reference-only items. */
-  portion: string
+  /**
+   * Serving in grams at REFERENCE_KG, for items whose portion should grow with
+   * bodyweight (proteins, grains, vegetables). Rendered via scalePortion().
+   */
+  portionG?: number
+  /** Qualifier shown after a scaled weight, e.g. 'dry' or 'raw'. */
+  portionNote?: string
+  /**
+   * Fixed serving for items bodyweight shouldn't change — a tablespoon of oil,
+   * one egg, a clove of garlic. Exactly one of portionG / portion is set.
+   */
+  portion?: string
   /** True when this exact item appears in the meal plan. */
   inPlan?: boolean
   note?: string
@@ -52,18 +62,18 @@ export const NUTRITION_GROUPS: NutritionGroup[] = [
     name: 'Chicken & poultry cuts',
     icon: 'meat',
     items: [
-      { name: 'Chicken breast, skinless', chinese: '雞胸肉', icon: 'meat', cut: 'Breast', leanness: 'lean', kcal: 120, proteinG: 22.5, carbG: 0, fatG: 2.6, pricePer100gHKD: 7, portion: '170 g', inPlan: true, note: 'The plan\'s default. Leanest high-volume protein here' },
-      { name: 'Chicken breast, skin on', chinese: '帶皮雞胸', icon: 'meat', cut: 'Breast', leanness: 'medium', kcal: 172, proteinG: 20.8, carbG: 0, fatG: 9.3, pricePer100gHKD: 6.5, portion: '170 g', note: 'The skin alone adds ~50 kcal per 100 g' },
-      { name: 'Chicken thigh, skinless', chinese: '去皮雞髀', icon: 'meat', cut: 'Thigh', leanness: 'lean', kcal: 145, proteinG: 19.7, carbG: 0, fatG: 7, pricePer100gHKD: 7.5, portion: '150 g', inPlan: true, note: 'Forgiving in stir-fries; won\'t dry out' },
-      { name: 'Chicken thigh, skin on', chinese: '帶皮雞髀', icon: 'meat', cut: 'Thigh', leanness: 'medium', kcal: 221, proteinG: 16.5, carbG: 0, fatG: 17, pricePer100gHKD: 6, portion: '150 g', note: 'Nearly double the skinless breast, calorie for gram' },
+      { name: 'Chicken breast, skinless', chinese: '雞胸肉', icon: 'meat', cut: 'Breast', leanness: 'lean', kcal: 120, proteinG: 22.5, carbG: 0, fatG: 2.6, pricePer100gHKD: 7, portionG: 170, inPlan: true, note: 'The plan\'s default. Leanest high-volume protein here' },
+      { name: 'Chicken breast, skin on', chinese: '帶皮雞胸', icon: 'meat', cut: 'Breast', leanness: 'medium', kcal: 172, proteinG: 20.8, carbG: 0, fatG: 9.3, pricePer100gHKD: 6.5, portionG: 170, note: 'The skin alone adds ~50 kcal per 100 g' },
+      { name: 'Chicken thigh, skinless', chinese: '去皮雞髀', icon: 'meat', cut: 'Thigh', leanness: 'lean', kcal: 145, proteinG: 19.7, carbG: 0, fatG: 7, pricePer100gHKD: 7.5, portionG: 150, inPlan: true, note: 'Forgiving in stir-fries; won\'t dry out' },
+      { name: 'Chicken thigh, skin on', chinese: '帶皮雞髀', icon: 'meat', cut: 'Thigh', leanness: 'medium', kcal: 221, proteinG: 16.5, carbG: 0, fatG: 17, pricePer100gHKD: 6, portionG: 150, note: 'Nearly double the skinless breast, calorie for gram' },
       { name: 'Chicken drumstick, skinless', chinese: '雞下腿', icon: 'meat', cut: 'Leg', leanness: 'lean', kcal: 135, proteinG: 20.1, carbG: 0, fatG: 5.7, pricePer100gHKD: 6.5, portion: '2 (140 g)', note: 'Bone is ~30% of raw weight — weigh the meat' },
       { name: 'Chicken wing, skin on', chinese: '雞翼', icon: 'meat', cut: 'Wing', leanness: 'fatty', kcal: 290, proteinG: 18.3, carbG: 0, fatG: 24, pricePer100gHKD: 6, portion: '3 (90 g)', note: 'Highest-fat chicken cut; mostly skin' },
-      { name: 'Chicken tenderloin', chinese: '雞柳', icon: 'meat', cut: 'Breast', leanness: 'lean', kcal: 109, proteinG: 23.2, carbG: 0, fatG: 1.3, pricePer100gHKD: 8, portion: '170 g', note: 'Leaner than breast; cooks in half the time' },
-      { name: 'Chicken mince', chinese: '雞肉碎', icon: 'meat', cut: 'Mince', leanness: 'medium', kcal: 143, proteinG: 17.4, carbG: 0, fatG: 8.1, pricePer100gHKD: 7, portion: '150 g', inPlan: true, note: 'Fat varies — ask for breast mince' },
-      { name: 'Chicken liver', chinese: '雞肝', icon: 'meat', cut: 'Offal', leanness: 'lean', kcal: 119, proteinG: 16.9, carbG: 0.7, fatG: 4.8, pricePer100gHKD: 3, portion: '80 g', note: 'Very high vitamin A — don\'t eat daily' },
-      { name: 'Sliced turkey breast', chinese: '火雞胸片', icon: 'meat', cut: 'Breast', leanness: 'lean', kcal: 104, proteinG: 17.1, carbG: 3.5, fatG: 1.7, pricePer100gHKD: 25, portion: '80 g', inPlan: true, note: 'Deli slices carry added salt and sugar' },
-      { name: 'Duck breast, skinless', chinese: '去皮鴨胸', icon: 'meat', cut: 'Breast', leanness: 'lean', kcal: 123, proteinG: 19.9, carbG: 0, fatG: 4.3, pricePer100gHKD: 12, portion: '150 g', note: 'Leaner than you\'d expect once the skin is off' },
-      { name: 'Roast duck, skin on', chinese: '燒鴨', icon: 'meat', cut: 'Whole', leanness: 'fatty', kcal: 337, proteinG: 19, carbG: 0, fatG: 28.4, pricePer100gHKD: 15, portion: '100 g', note: 'Cha chaan teng staple — the skin carries the calories' },
+      { name: 'Chicken tenderloin', chinese: '雞柳', icon: 'meat', cut: 'Breast', leanness: 'lean', kcal: 109, proteinG: 23.2, carbG: 0, fatG: 1.3, pricePer100gHKD: 8, portionG: 170, note: 'Leaner than breast; cooks in half the time' },
+      { name: 'Chicken mince', chinese: '雞肉碎', icon: 'meat', cut: 'Mince', leanness: 'medium', kcal: 143, proteinG: 17.4, carbG: 0, fatG: 8.1, pricePer100gHKD: 7, portionG: 150, inPlan: true, note: 'Fat varies — ask for breast mince' },
+      { name: 'Chicken liver', chinese: '雞肝', icon: 'meat', cut: 'Offal', leanness: 'lean', kcal: 119, proteinG: 16.9, carbG: 0.7, fatG: 4.8, pricePer100gHKD: 3, portionG: 80, note: 'Very high vitamin A — don\'t eat daily' },
+      { name: 'Sliced turkey breast', chinese: '火雞胸片', icon: 'meat', cut: 'Breast', leanness: 'lean', kcal: 104, proteinG: 17.1, carbG: 3.5, fatG: 1.7, pricePer100gHKD: 25, portionG: 80, inPlan: true, note: 'Deli slices carry added salt and sugar' },
+      { name: 'Duck breast, skinless', chinese: '去皮鴨胸', icon: 'meat', cut: 'Breast', leanness: 'lean', kcal: 123, proteinG: 19.9, carbG: 0, fatG: 4.3, pricePer100gHKD: 12, portionG: 150, note: 'Leaner than you\'d expect once the skin is off' },
+      { name: 'Roast duck, skin on', chinese: '燒鴨', icon: 'meat', cut: 'Whole', leanness: 'fatty', kcal: 337, proteinG: 19, carbG: 0, fatG: 28.4, pricePer100gHKD: 15, portionG: 100, note: 'Cha chaan teng staple — the skin carries the calories' },
     ],
   },
   {
@@ -80,54 +90,54 @@ export const NUTRITION_GROUPS: NutritionGroup[] = [
     name: 'Beef cuts',
     icon: 'meat',
     items: [
-      { name: 'Beef fillet / tenderloin', chinese: '牛柳', icon: 'meat', cut: 'Loin', leanness: 'lean', kcal: 158, proteinG: 21.6, carbG: 0, fatG: 7.8, pricePer100gHKD: 30, portion: '150 g', note: 'Leanest steak cut worth grilling' },
-      { name: 'Beef sirloin, trimmed', chinese: '西冷', icon: 'meat', cut: 'Loin', leanness: 'lean', kcal: 130, proteinG: 22.5, carbG: 0, fatG: 4.1, pricePer100gHKD: 22, portion: '150 g', note: 'Trim the fat cap and it beats fillet on macros' },
-      { name: 'Beef flank steak', chinese: '牛腩扒', icon: 'meat', cut: 'Flank', leanness: 'medium', kcal: 192, proteinG: 21.2, carbG: 0, fatG: 11.6, pricePer100gHKD: 15, portion: '150 g', inPlan: true, note: 'Slice against the grain or it eats tough' },
-      { name: 'Beef ribeye', chinese: '肉眼', icon: 'meat', cut: 'Rib', leanness: 'fatty', kcal: 291, proteinG: 19.4, carbG: 0, fatG: 23.5, pricePer100gHKD: 28, portion: '150 g', note: 'Marbling is the point — and the calories' },
-      { name: 'Beef short rib', chinese: '牛小排', icon: 'meat', cut: 'Rib', leanness: 'fatty', kcal: 380, proteinG: 15.1, carbG: 0, fatG: 35.7, pricePer100gHKD: 22, portion: '120 g', note: 'Fattiest cut here; Korean BBQ default' },
-      { name: 'Beef brisket', chinese: '牛腩', icon: 'meat', cut: 'Brisket', leanness: 'fatty', kcal: 251, proteinG: 18.7, carbG: 0, fatG: 19.2, pricePer100gHKD: 12, portion: '150 g', note: 'Lean-trimmed brisket drops to about 155 kcal' },
-      { name: 'Beef shin / shank', chinese: '牛腱', icon: 'meat', cut: 'Shank', leanness: 'lean', kcal: 145, proteinG: 21.8, carbG: 0, fatG: 6, pricePer100gHKD: 11, portion: '150 g', note: 'Collagen-rich; needs a long braise' },
-      { name: 'Lean beef mince (5% fat)', chinese: '瘦牛肉碎', icon: 'meat', cut: 'Mince', leanness: 'lean', kcal: 137, proteinG: 21.4, carbG: 0, fatG: 5, pricePer100gHKD: 12, portion: '150 g', inPlan: true, note: 'The plan assumes this grade' },
-      { name: 'Beef mince (15% fat)', chinese: '牛肉碎', icon: 'meat', cut: 'Mince', leanness: 'medium', kcal: 215, proteinG: 18.6, carbG: 0, fatG: 15, pricePer100gHKD: 9, portion: '150 g', note: 'The default at most butchers — check before buying' },
-      { name: 'Beef mince (20% fat)', chinese: '肥牛肉碎', icon: 'meat', cut: 'Mince', leanness: 'fatty', kcal: 254, proteinG: 17.2, carbG: 0, fatG: 20, pricePer100gHKD: 8, portion: '150 g', note: 'Nearly double the lean grade per gram' },
+      { name: 'Beef fillet / tenderloin', chinese: '牛柳', icon: 'meat', cut: 'Loin', leanness: 'lean', kcal: 158, proteinG: 21.6, carbG: 0, fatG: 7.8, pricePer100gHKD: 30, portionG: 150, note: 'Leanest steak cut worth grilling' },
+      { name: 'Beef sirloin, trimmed', chinese: '西冷', icon: 'meat', cut: 'Loin', leanness: 'lean', kcal: 130, proteinG: 22.5, carbG: 0, fatG: 4.1, pricePer100gHKD: 22, portionG: 150, note: 'Trim the fat cap and it beats fillet on macros' },
+      { name: 'Beef flank steak', chinese: '牛腩扒', icon: 'meat', cut: 'Flank', leanness: 'medium', kcal: 192, proteinG: 21.2, carbG: 0, fatG: 11.6, pricePer100gHKD: 15, portionG: 150, inPlan: true, note: 'Slice against the grain or it eats tough' },
+      { name: 'Beef ribeye', chinese: '肉眼', icon: 'meat', cut: 'Rib', leanness: 'fatty', kcal: 291, proteinG: 19.4, carbG: 0, fatG: 23.5, pricePer100gHKD: 28, portionG: 150, note: 'Marbling is the point — and the calories' },
+      { name: 'Beef short rib', chinese: '牛小排', icon: 'meat', cut: 'Rib', leanness: 'fatty', kcal: 380, proteinG: 15.1, carbG: 0, fatG: 35.7, pricePer100gHKD: 22, portionG: 120, note: 'Fattiest cut here; Korean BBQ default' },
+      { name: 'Beef brisket', chinese: '牛腩', icon: 'meat', cut: 'Brisket', leanness: 'fatty', kcal: 251, proteinG: 18.7, carbG: 0, fatG: 19.2, pricePer100gHKD: 12, portionG: 150, note: 'Lean-trimmed brisket drops to about 155 kcal' },
+      { name: 'Beef shin / shank', chinese: '牛腱', icon: 'meat', cut: 'Shank', leanness: 'lean', kcal: 145, proteinG: 21.8, carbG: 0, fatG: 6, pricePer100gHKD: 11, portionG: 150, note: 'Collagen-rich; needs a long braise' },
+      { name: 'Lean beef mince (5% fat)', chinese: '瘦牛肉碎', icon: 'meat', cut: 'Mince', leanness: 'lean', kcal: 137, proteinG: 21.4, carbG: 0, fatG: 5, pricePer100gHKD: 12, portionG: 150, inPlan: true, note: 'The plan assumes this grade' },
+      { name: 'Beef mince (15% fat)', chinese: '牛肉碎', icon: 'meat', cut: 'Mince', leanness: 'medium', kcal: 215, proteinG: 18.6, carbG: 0, fatG: 15, pricePer100gHKD: 9, portionG: 150, note: 'The default at most butchers — check before buying' },
+      { name: 'Beef mince (20% fat)', chinese: '肥牛肉碎', icon: 'meat', cut: 'Mince', leanness: 'fatty', kcal: 254, proteinG: 17.2, carbG: 0, fatG: 20, pricePer100gHKD: 8, portionG: 150, note: 'Nearly double the lean grade per gram' },
     ],
   },
   {
     name: 'Pork cuts',
     icon: 'meat',
     items: [
-      { name: 'Pork tenderloin', chinese: '豬柳', icon: 'meat', cut: 'Loin', leanness: 'lean', kcal: 143, proteinG: 21.1, carbG: 0, fatG: 5.9, pricePer100gHKD: 9, portion: '150 g', note: 'As lean as chicken thigh; the cut to default to' },
-      { name: 'Pork loin chop, trimmed', chinese: '豬扒', icon: 'meat', cut: 'Loin', leanness: 'lean', kcal: 152, proteinG: 21.4, carbG: 0, fatG: 6.9, pricePer100gHKD: 8, portion: '150 g', note: 'Untrimmed with the fat rim, closer to 210 kcal' },
-      { name: 'Pork shoulder / butt', chinese: '梅頭', icon: 'meat', cut: 'Shoulder', leanness: 'medium', kcal: 211, proteinG: 18.2, carbG: 0, fatG: 15, pricePer100gHKD: 8, portion: '130 g', note: 'Char siu cut — before the sugar glaze' },
-      { name: 'Pork belly', chinese: '五花腩', icon: 'meat', cut: 'Belly', leanness: 'fatty', kcal: 518, proteinG: 9.3, carbG: 0, fatG: 53, pricePer100gHKD: 9, portion: '80 g', note: 'Highest-calorie item on this page. Treat as a garnish' },
-      { name: 'Pork ribs', chinese: '排骨', icon: 'meat', cut: 'Rib', leanness: 'fatty', kcal: 277, proteinG: 20.4, carbG: 0, fatG: 21.2, pricePer100gHKD: 11, portion: '150 g raw', note: 'Bone is ~40% of raw weight' },
-      { name: 'Lean pork mince', chinese: '瘦豬肉碎', icon: 'meat', cut: 'Mince', leanness: 'lean', kcal: 143, proteinG: 21.1, carbG: 0, fatG: 5.9, pricePer100gHKD: 7, portion: '120 g', inPlan: true, note: 'Standard mince is closer to 260 kcal' },
-      { name: 'Pork mince, standard', chinese: '豬肉碎', icon: 'meat', cut: 'Mince', leanness: 'fatty', kcal: 263, proteinG: 16.9, carbG: 0, fatG: 21.2, pricePer100gHKD: 6, portion: '120 g', note: 'What you get by default unless you ask' },
-      { name: 'Char siu', chinese: '叉燒', icon: 'meat', cut: 'Prepared', leanness: 'medium', kcal: 245, proteinG: 19, carbG: 12, fatG: 13.5, pricePer100gHKD: 16, portion: '100 g', note: 'The glaze adds the carbs; lean char siu is leaner' },
+      { name: 'Pork tenderloin', chinese: '豬柳', icon: 'meat', cut: 'Loin', leanness: 'lean', kcal: 143, proteinG: 21.1, carbG: 0, fatG: 5.9, pricePer100gHKD: 9, portionG: 150, note: 'As lean as chicken thigh; the cut to default to' },
+      { name: 'Pork loin chop, trimmed', chinese: '豬扒', icon: 'meat', cut: 'Loin', leanness: 'lean', kcal: 152, proteinG: 21.4, carbG: 0, fatG: 6.9, pricePer100gHKD: 8, portionG: 150, note: 'Untrimmed with the fat rim, closer to 210 kcal' },
+      { name: 'Pork shoulder / butt', chinese: '梅頭', icon: 'meat', cut: 'Shoulder', leanness: 'medium', kcal: 211, proteinG: 18.2, carbG: 0, fatG: 15, pricePer100gHKD: 8, portionG: 130, note: 'Char siu cut — before the sugar glaze' },
+      { name: 'Pork belly', chinese: '五花腩', icon: 'meat', cut: 'Belly', leanness: 'fatty', kcal: 518, proteinG: 9.3, carbG: 0, fatG: 53, pricePer100gHKD: 9, portionG: 80, note: 'Highest-calorie item on this page. Treat as a garnish' },
+      { name: 'Pork ribs', chinese: '排骨', icon: 'meat', cut: 'Rib', leanness: 'fatty', kcal: 277, proteinG: 20.4, carbG: 0, fatG: 21.2, pricePer100gHKD: 11, portionG: 150, portionNote: 'raw', note: 'Bone is ~40% of raw weight' },
+      { name: 'Lean pork mince', chinese: '瘦豬肉碎', icon: 'meat', cut: 'Mince', leanness: 'lean', kcal: 143, proteinG: 21.1, carbG: 0, fatG: 5.9, pricePer100gHKD: 7, portionG: 120, inPlan: true, note: 'Standard mince is closer to 260 kcal' },
+      { name: 'Pork mince, standard', chinese: '豬肉碎', icon: 'meat', cut: 'Mince', leanness: 'fatty', kcal: 263, proteinG: 16.9, carbG: 0, fatG: 21.2, pricePer100gHKD: 6, portionG: 120, note: 'What you get by default unless you ask' },
+      { name: 'Char siu', chinese: '叉燒', icon: 'meat', cut: 'Prepared', leanness: 'medium', kcal: 245, proteinG: 19, carbG: 12, fatG: 13.5, pricePer100gHKD: 16, portionG: 100, note: 'The glaze adds the carbs; lean char siu is leaner' },
     ],
   },
   {
     name: 'Fish',
     icon: 'fish',
     items: [
-      { name: 'Salmon fillet, skin on', chinese: '三文魚', icon: 'fish', cut: 'Oily', leanness: 'medium', kcal: 208, proteinG: 20.4, carbG: 0, fatG: 13.4, pricePer100gHKD: 24, portion: '170 g', inPlan: true, note: 'About 2.3 g omega-3 per 100 g' },
-      { name: 'Salmon belly', chinese: '三文魚腩', icon: 'fish', cut: 'Oily', leanness: 'fatty', kcal: 290, proteinG: 17.5, carbG: 0, fatG: 24.5, pricePer100gHKD: 16, portion: '120 g', note: 'Fattiest part of the fish; most omega-3 too' },
+      { name: 'Salmon fillet, skin on', chinese: '三文魚', icon: 'fish', cut: 'Oily', leanness: 'medium', kcal: 208, proteinG: 20.4, carbG: 0, fatG: 13.4, pricePer100gHKD: 24, portionG: 170, inPlan: true, note: 'About 2.3 g omega-3 per 100 g' },
+      { name: 'Salmon belly', chinese: '三文魚腩', icon: 'fish', cut: 'Oily', leanness: 'fatty', kcal: 290, proteinG: 17.5, carbG: 0, fatG: 24.5, pricePer100gHKD: 16, portionG: 120, note: 'Fattiest part of the fish; most omega-3 too' },
       { name: 'Sea bass, whole or fillet', chinese: '鱸魚', icon: 'fish', cut: 'White', leanness: 'lean', kcal: 97, proteinG: 18.4, carbG: 0, fatG: 2, pricePer100gHKD: 15, portion: '300 g whole', inPlan: true, note: 'Whole fish is ~45% edible after bones' },
-      { name: 'Cod fillet', chinese: '鱈魚', icon: 'fish', cut: 'White', leanness: 'lean', kcal: 82, proteinG: 17.8, carbG: 0, fatG: 0.7, pricePer100gHKD: 25, portion: '170 g', note: 'Leanest fish here; dries out fast' },
-      { name: 'Tuna steak, fresh', chinese: '吞拿魚扒', icon: 'fish', cut: 'Oily', leanness: 'lean', kcal: 144, proteinG: 23.3, carbG: 0, fatG: 4.9, pricePer100gHKD: 28, portion: '150 g', note: 'Bluefin is far fattier than yellowfin' },
+      { name: 'Cod fillet', chinese: '鱈魚', icon: 'fish', cut: 'White', leanness: 'lean', kcal: 82, proteinG: 17.8, carbG: 0, fatG: 0.7, pricePer100gHKD: 25, portionG: 170, note: 'Leanest fish here; dries out fast' },
+      { name: 'Tuna steak, fresh', chinese: '吞拿魚扒', icon: 'fish', cut: 'Oily', leanness: 'lean', kcal: 144, proteinG: 23.3, carbG: 0, fatG: 4.9, pricePer100gHKD: 28, portionG: 150, note: 'Bluefin is far fattier than yellowfin' },
       { name: 'Canned tuna in water', chinese: '水浸吞拿魚', icon: 'fish', cut: 'Canned', leanness: 'lean', kcal: 116, proteinG: 25.5, carbG: 0, fatG: 0.8, pricePer100gHKD: 12, portion: '1 tin (100 g)', inPlan: true, note: 'Best protein-per-calorie on this page' },
       { name: 'Canned tuna in oil, drained', chinese: '油浸吞拿魚', icon: 'fish', cut: 'Canned', leanness: 'medium', kcal: 186, proteinG: 24.9, carbG: 0, fatG: 8.2, pricePer100gHKD: 10, portion: '1 tin (100 g)', note: 'Draining removes some but not most of the oil' },
-      { name: 'Mackerel', chinese: '鯖魚', icon: 'fish', cut: 'Oily', leanness: 'medium', kcal: 205, proteinG: 18.6, carbG: 0, fatG: 13.9, pricePer100gHKD: 10, portion: '150 g', note: 'Cheapest high-omega-3 option' },
+      { name: 'Mackerel', chinese: '鯖魚', icon: 'fish', cut: 'Oily', leanness: 'medium', kcal: 205, proteinG: 18.6, carbG: 0, fatG: 13.9, pricePer100gHKD: 10, portionG: 150, note: 'Cheapest high-omega-3 option' },
     ],
   },
   {
     name: 'Shellfish & seafood',
     icon: 'fish',
     items: [
-      { name: 'Prawns, peeled raw', chinese: '蝦仁', icon: 'fish', cut: 'Shellfish', leanness: 'lean', kcal: 85, proteinG: 20.1, carbG: 0.2, fatG: 0.5, pricePer100gHKD: 15, portion: '150 g', inPlan: true, note: 'Very lean; overcooks in about a minute' },
-      { name: 'Clams, shelled', chinese: '蜆肉', icon: 'fish', cut: 'Shellfish', leanness: 'lean', kcal: 86, proteinG: 14.7, carbG: 3, fatG: 1, pricePer100gHKD: 12, portion: '150 g', inPlan: true, note: 'Iron and B12 heavyweight' },
-      { name: 'Squid', chinese: '魷魚', icon: 'fish', cut: 'Cephalopod', leanness: 'lean', kcal: 92, proteinG: 15.6, carbG: 3.1, fatG: 1.4, pricePer100gHKD: 9, portion: '150 g', note: 'Cook fast or very slow — nothing in between' },
-      { name: 'Scallops', chinese: '帶子', icon: 'fish', cut: 'Shellfish', leanness: 'lean', kcal: 69, proteinG: 12.1, carbG: 3.2, fatG: 0.5, pricePer100gHKD: 25, portion: '120 g' },
+      { name: 'Prawns, peeled raw', chinese: '蝦仁', icon: 'fish', cut: 'Shellfish', leanness: 'lean', kcal: 85, proteinG: 20.1, carbG: 0.2, fatG: 0.5, pricePer100gHKD: 15, portionG: 150, inPlan: true, note: 'Very lean; overcooks in about a minute' },
+      { name: 'Clams, shelled', chinese: '蜆肉', icon: 'fish', cut: 'Shellfish', leanness: 'lean', kcal: 86, proteinG: 14.7, carbG: 3, fatG: 1, pricePer100gHKD: 12, portionG: 150, inPlan: true, note: 'Iron and B12 heavyweight' },
+      { name: 'Squid', chinese: '魷魚', icon: 'fish', cut: 'Cephalopod', leanness: 'lean', kcal: 92, proteinG: 15.6, carbG: 3.1, fatG: 1.4, pricePer100gHKD: 9, portionG: 150, note: 'Cook fast or very slow — nothing in between' },
+      { name: 'Scallops', chinese: '帶子', icon: 'fish', cut: 'Shellfish', leanness: 'lean', kcal: 69, proteinG: 12.1, carbG: 3.2, fatG: 0.5, pricePer100gHKD: 25, portionG: 120 },
       { name: 'Anchovy stock', chinese: '鯷魚高湯', icon: 'soup', cut: 'Stock', leanness: 'lean', kcal: 8, proteinG: 1, carbG: 0.6, fatG: 0.2, portion: '400 ml', inPlan: true, note: 'Effectively free calories; watch sodium' },
     ],
   },
@@ -135,8 +145,8 @@ export const NUTRITION_GROUPS: NutritionGroup[] = [
     name: 'Soy & plant protein',
     icon: 'cheese',
     items: [
-      { name: 'Firm tofu', chinese: '硬豆腐', icon: 'cheese', kcal: 144, proteinG: 15.8, carbG: 4.3, fatG: 8.7, pricePer100gHKD: 2.5, portion: '200 g', note: 'Press it — water is most of the weight' },
-      { name: 'Silken tofu', chinese: '滑豆腐', icon: 'cheese', kcal: 55, proteinG: 4.8, carbG: 2, fatG: 3, pricePer100gHKD: 2, portion: '300 g', note: 'A third the protein of firm, by weight' },
+      { name: 'Firm tofu', chinese: '硬豆腐', icon: 'cheese', kcal: 144, proteinG: 15.8, carbG: 4.3, fatG: 8.7, pricePer100gHKD: 2.5, portionG: 200, note: 'Press it — water is most of the weight' },
+      { name: 'Silken tofu', chinese: '滑豆腐', icon: 'cheese', kcal: 55, proteinG: 4.8, carbG: 2, fatG: 3, pricePer100gHKD: 2, portionG: 300, note: 'A third the protein of firm, by weight' },
       { name: 'Natto', chinese: '納豆', icon: 'bowl-spoon', kcal: 211, proteinG: 19.4, carbG: 12.7, fatG: 11, pricePer100gHKD: 22, portion: '1 pack (45 g)', note: 'Vitamin K2 and fermented fibre' },
       { name: 'Edamame, shelled', chinese: '毛豆', icon: 'salad', kcal: 121, proteinG: 11.9, carbG: 8.9, fatG: 5.2, pricePer100gHKD: 6, portion: '150 g pods ≈ 75 g beans', note: 'Pods are inedible — weigh shelled' },
       { name: 'Unsweetened soy milk', chinese: '無糖豆漿', icon: 'milk', kcal: 33, proteinG: 3.3, carbG: 1.2, fatG: 1.8, pricePer100gHKD: 1.3, portion: '300 ml', note: 'Sweetened adds 6–8 g sugar per 100 ml' },
@@ -148,7 +158,7 @@ export const NUTRITION_GROUPS: NutritionGroup[] = [
     name: 'Dairy',
     icon: 'milk',
     items: [
-      { name: 'Greek yoghurt, 2% fat', chinese: '希臘乳酪', icon: 'bowl-spoon', kcal: 73, proteinG: 9.9, carbG: 3.9, fatG: 1.9, pricePer100gHKD: 7, portion: '200 g', note: 'Regular yoghurt has about half the protein' },
+      { name: 'Greek yoghurt, 2% fat', chinese: '希臘乳酪', icon: 'bowl-spoon', kcal: 73, proteinG: 9.9, carbG: 3.9, fatG: 1.9, pricePer100gHKD: 7, portionG: 200, note: 'Regular yoghurt has about half the protein' },
       { name: 'Milk, semi-skimmed', chinese: '半脫脂奶', icon: 'milk', kcal: 47, proteinG: 3.4, carbG: 4.8, fatG: 1.7, pricePer100gHKD: 2.5, portion: '250 ml', note: 'Whole milk is 64 kcal per 100 ml' },
     ],
   },
@@ -156,13 +166,13 @@ export const NUTRITION_GROUPS: NutritionGroup[] = [
     name: 'Grains & starch',
     icon: 'bowl-chopsticks',
     items: [
-      { name: 'Rolled oats, dry', chinese: '燕麥片', icon: 'bowl-spoon', kcal: 379, proteinG: 13.2, carbG: 67.7, fatG: 6.5, portion: '60 g dry', note: 'Weigh dry — cooked triples in volume' },
-      { name: 'Brown rice, cooked', chinese: '糙米飯', icon: 'bowl-chopsticks', kcal: 123, proteinG: 2.7, carbG: 25.6, fatG: 1, portion: '180 g', note: 'Dry weight is about a third of cooked' },
-      { name: 'White rice, cooked', chinese: '白飯', icon: 'bowl-chopsticks', kcal: 130, proteinG: 2.7, carbG: 28.2, fatG: 0.3, portion: '180 g', note: 'Near-identical to brown; less fibre' },
-      { name: 'Rice noodles, dry', chinese: '米粉', icon: 'bowl-chopsticks', kcal: 364, proteinG: 6.2, carbG: 81.6, fatG: 0.6, portion: '80 g dry', note: 'Cooked, that\'s roughly 220 g' },
+      { name: 'Rolled oats, dry', chinese: '燕麥片', icon: 'bowl-spoon', kcal: 379, proteinG: 13.2, carbG: 67.7, fatG: 6.5, portionG: 60, portionNote: 'dry', note: 'Weigh dry — cooked triples in volume' },
+      { name: 'Brown rice, cooked', chinese: '糙米飯', icon: 'bowl-chopsticks', kcal: 123, proteinG: 2.7, carbG: 25.6, fatG: 1, portionG: 180, note: 'Dry weight is about a third of cooked' },
+      { name: 'White rice, cooked', chinese: '白飯', icon: 'bowl-chopsticks', kcal: 130, proteinG: 2.7, carbG: 28.2, fatG: 0.3, portionG: 180, note: 'Near-identical to brown; less fibre' },
+      { name: 'Rice noodles, dry', chinese: '米粉', icon: 'bowl-chopsticks', kcal: 364, proteinG: 6.2, carbG: 81.6, fatG: 0.6, portionG: 80, portionNote: 'dry', note: 'Cooked, that\'s roughly 220 g' },
       { name: 'Wholemeal tortilla', chinese: '全麥薄餅', icon: 'bread', kcal: 313, proteinG: 9, carbG: 48, fatG: 8, portion: '1 (60 g)', note: 'Check the label — sizes vary widely' },
       { name: 'Toasted rice powder', chinese: '炒米粉', icon: 'droplet', kcal: 380, proteinG: 7, carbG: 82, fatG: 1, portion: '1 tbsp (8 g)', note: 'There for texture, not calories' },
-      { name: 'Konjac pearls', chinese: '蒟蒻珠', icon: 'bubble-tea', kcal: 10, proteinG: 0.1, carbG: 3, fatG: 0, portion: '80 g', note: 'Near-zero-calorie tapioca substitute' },
+      { name: 'Konjac pearls', chinese: '蒟蒻珠', icon: 'bubble-tea', kcal: 10, proteinG: 0.1, carbG: 3, fatG: 0, portionG: 80, note: 'Near-zero-calorie tapioca substitute' },
       { name: 'Cornstarch', chinese: '生粉', icon: 'droplet', kcal: 381, proteinG: 0.3, carbG: 91.3, fatG: 0.1, portion: '1 tsp (3 g)', note: 'A slurry adds ~11 kcal to the whole dish' },
     ],
   },
@@ -170,21 +180,21 @@ export const NUTRITION_GROUPS: NutritionGroup[] = [
     name: 'Vegetables & aromatics',
     icon: 'salad',
     items: [
-      { name: 'Broccoli', chinese: '西蘭花', icon: 'salad', kcal: 34, proteinG: 2.8, carbG: 6.6, fatG: 0.4, portion: '150 g', note: '2.6 g fibre per 100 g' },
-      { name: 'Gai lan', chinese: '芥蘭', icon: 'salad', kcal: 22, proteinG: 1.9, carbG: 3.5, fatG: 0.4, portion: '150 g', note: 'Calcium-dense brassica' },
-      { name: 'Choy sum', chinese: '菜心', icon: 'salad', kcal: 20, proteinG: 1.8, carbG: 2.9, fatG: 0.3, portion: '150 g', note: 'Stems need a minute longer than leaves' },
-      { name: 'Spinach', chinese: '菠菜', icon: 'salad', kcal: 23, proteinG: 2.9, carbG: 3.6, fatG: 0.4, portion: '100 g', note: 'Wilts to about a fifth of raw volume' },
-      { name: 'Bean sprouts', chinese: '豆芽', icon: 'salad', kcal: 30, proteinG: 3, carbG: 5.9, fatG: 0.2, portion: '100 g', note: 'Add at the very end for crunch' },
-      { name: 'Carrot', chinese: '紅蘿蔔', icon: 'carrot', kcal: 41, proteinG: 0.9, carbG: 9.6, fatG: 0.2, portion: '60 g' },
-      { name: 'Cucumber', chinese: '青瓜', icon: 'salad', kcal: 15, proteinG: 0.7, carbG: 3.6, fatG: 0.1, portion: '100 g' },
+      { name: 'Broccoli', chinese: '西蘭花', icon: 'salad', kcal: 34, proteinG: 2.8, carbG: 6.6, fatG: 0.4, portionG: 150, note: '2.6 g fibre per 100 g' },
+      { name: 'Gai lan', chinese: '芥蘭', icon: 'salad', kcal: 22, proteinG: 1.9, carbG: 3.5, fatG: 0.4, portionG: 150, note: 'Calcium-dense brassica' },
+      { name: 'Choy sum', chinese: '菜心', icon: 'salad', kcal: 20, proteinG: 1.8, carbG: 2.9, fatG: 0.3, portionG: 150, note: 'Stems need a minute longer than leaves' },
+      { name: 'Spinach', chinese: '菠菜', icon: 'salad', kcal: 23, proteinG: 2.9, carbG: 3.6, fatG: 0.4, portionG: 100, note: 'Wilts to about a fifth of raw volume' },
+      { name: 'Bean sprouts', chinese: '豆芽', icon: 'salad', kcal: 30, proteinG: 3, carbG: 5.9, fatG: 0.2, portionG: 100, note: 'Add at the very end for crunch' },
+      { name: 'Carrot', chinese: '紅蘿蔔', icon: 'carrot', kcal: 41, proteinG: 0.9, carbG: 9.6, fatG: 0.2, portionG: 60 },
+      { name: 'Cucumber', chinese: '青瓜', icon: 'salad', kcal: 15, proteinG: 0.7, carbG: 3.6, fatG: 0.1, portionG: 100 },
       { name: 'Lettuce', chinese: '生菜', icon: 'salad', kcal: 15, proteinG: 1.4, carbG: 2.9, fatG: 0.2, portion: '6 cups (80 g)' },
-      { name: 'Onion', chinese: '洋蔥', icon: 'apple', kcal: 40, proteinG: 1.1, carbG: 9.3, fatG: 0.1, portion: '80 g' },
-      { name: 'Kimchi', chinese: '泡菜', icon: 'pepper', kcal: 15, proteinG: 1.1, carbG: 2.4, fatG: 0.5, portion: '100 g', note: '500–900 mg sodium per 100 g' },
-      { name: 'Ginger, fresh', chinese: '薑', icon: 'mushroom', kcal: 80, proteinG: 1.8, carbG: 17.8, fatG: 0.8, portion: '10 g', note: 'Used in grams — negligible either way' },
+      { name: 'Onion', chinese: '洋蔥', icon: 'apple', kcal: 40, proteinG: 1.1, carbG: 9.3, fatG: 0.1, portionG: 80 },
+      { name: 'Kimchi', chinese: '泡菜', icon: 'pepper', kcal: 15, proteinG: 1.1, carbG: 2.4, fatG: 0.5, portionG: 100, note: '500–900 mg sodium per 100 g' },
+      { name: 'Ginger, fresh', chinese: '薑', icon: 'mushroom', kcal: 80, proteinG: 1.8, carbG: 17.8, fatG: 0.8, portionG: 10, note: 'Used in grams — negligible either way' },
       { name: 'Garlic', chinese: '蒜', icon: 'mushroom', kcal: 149, proteinG: 6.4, carbG: 33.1, fatG: 0.5, portion: '2 cloves (6 g)', note: 'Negligible at cooking quantities' },
-      { name: 'Spring onion', chinese: '蔥', icon: 'salad', kcal: 32, proteinG: 1.8, carbG: 7.3, fatG: 0.2, portion: '15 g' },
-      { name: 'Shallot', chinese: '乾蔥', icon: 'apple', kcal: 72, proteinG: 2.5, carbG: 16.8, fatG: 0.1, portion: '20 g' },
-      { name: 'Coriander / mint', chinese: '芫荽 / 薄荷', icon: 'salad', kcal: 23, proteinG: 2.1, carbG: 3.7, fatG: 0.5, portion: '15 g' },
+      { name: 'Spring onion', chinese: '蔥', icon: 'salad', kcal: 32, proteinG: 1.8, carbG: 7.3, fatG: 0.2, portionG: 15 },
+      { name: 'Shallot', chinese: '乾蔥', icon: 'apple', kcal: 72, proteinG: 2.5, carbG: 16.8, fatG: 0.1, portionG: 20 },
+      { name: 'Coriander / mint', chinese: '芫荽 / 薄荷', icon: 'salad', kcal: 23, proteinG: 2.1, carbG: 3.7, fatG: 0.5, portionG: 15 },
     ],
   },
   {
@@ -193,9 +203,9 @@ export const NUTRITION_GROUPS: NutritionGroup[] = [
     items: [
       { name: 'Neutral cooking oil', chinese: '食油', icon: 'droplet', kcal: 884, proteinG: 0, carbG: 0, fatG: 100, portion: '1 tbsp (14 g)', note: '124 kcal a tablespoon — the easiest overshoot' },
       { name: 'Sesame oil', chinese: '麻油', icon: 'droplet', kcal: 884, proteinG: 0, carbG: 0, fatG: 100, portion: '1 tsp (5 g)', note: 'Finishing oil; a few drops is enough' },
-      { name: 'Walnuts', chinese: '核桃', icon: 'avocado', kcal: 654, proteinG: 15.2, carbG: 13.7, fatG: 65.2, portion: '20 g', note: 'Best plant source of ALA omega-3' },
+      { name: 'Walnuts', chinese: '核桃', icon: 'avocado', kcal: 654, proteinG: 15.2, carbG: 13.7, fatG: 65.2, portionG: 20, note: 'Best plant source of ALA omega-3' },
       { name: 'Sesame seeds', chinese: '芝麻', icon: 'droplet', kcal: 573, proteinG: 17.7, carbG: 23.4, fatG: 49.7, portion: '1 tbsp (9 g)' },
-      { name: 'Black sesame powder', chinese: '黑芝麻粉', icon: 'droplet', kcal: 573, proteinG: 17.7, carbG: 23.4, fatG: 49.7, portion: '15 g', note: 'Same as the seeds; ground absorbs better' },
+      { name: 'Black sesame powder', chinese: '黑芝麻粉', icon: 'droplet', kcal: 573, proteinG: 17.7, carbG: 23.4, fatG: 49.7, portionG: 15, note: 'Same as the seeds; ground absorbs better' },
     ],
   },
   {
@@ -203,7 +213,7 @@ export const NUTRITION_GROUPS: NutritionGroup[] = [
     icon: 'apple',
     items: [
       { name: 'Banana', chinese: '香蕉', icon: 'apple', kcal: 89, proteinG: 1.1, carbG: 22.8, fatG: 0.3, portion: '1 medium (118 g)' },
-      { name: 'Mixed berries', chinese: '雜莓', icon: 'apple', kcal: 50, proteinG: 0.9, carbG: 11.6, fatG: 0.4, portion: '100 g', note: 'Frozen is nutritionally equal to fresh' },
+      { name: 'Mixed berries', chinese: '雜莓', icon: 'apple', kcal: 50, proteinG: 0.9, carbG: 11.6, fatG: 0.4, portionG: 100, note: 'Frozen is nutritionally equal to fresh' },
       { name: 'Honey', chinese: '蜂蜜', icon: 'droplet', kcal: 304, proteinG: 0.3, carbG: 82.4, fatG: 0, portion: '1 tsp (7 g)', note: '21 kcal a teaspoon, all sugar' },
       { name: 'Lime juice', chinese: '青檸汁', icon: 'lemon', kcal: 25, proteinG: 0.4, carbG: 8.4, fatG: 0.1, portion: '1 lime (30 ml)' },
     ],

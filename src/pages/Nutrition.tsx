@@ -11,6 +11,7 @@ import {
   LEANNESS_LABELS,
   MACRO_LABELS,
   PROTEIN_SERVING_G,
+  scalePortion,
   toFilterState,
   type MacroKey,
   type SortKey,
@@ -19,6 +20,7 @@ import { Badge } from '@/components/ui/badge'
 import { BackToTop } from '@/components/BackToTop'
 import { INGREDIENT_DRAG, MacroCalculator } from '@/components/MacroCalculator'
 import { usePicks } from '@/stores/picks'
+import { usePlan } from '@/stores/profile'
 import { useUi } from '@/stores/ui'
 import { cn } from '@/lib/utils'
 
@@ -100,6 +102,7 @@ export function Nutrition() {
   const setShowFilters = useUi((s) => s.setNutritionFiltersOpen)
   const [dragActive, setDragActive] = useState(false)
   const addPick = usePicks((s) => s.addPick)
+  const profile = usePlan((s) => s.profile)
   const controlsRef = useRef<HTMLDivElement>(null)
   const [controlsH, setControlsH] = useState(0)
 
@@ -131,9 +134,10 @@ export function Nutrition() {
           <Badge tone="outline" className="align-middle text-[10px]">
             in plan
           </Badge>
-          ; the rest are for ordering out or at the butcher. Tap <Plus size={12} className="inline align-[-1px]" /> on
-          any row — or drag it — to build a meal in the calculator and see it against your daily
-          target.
+          ; the rest are for ordering out or at the butcher. Portions track your current{' '}
+          <strong className="font-medium text-foreground">{profile.weightKg.toFixed(1)} kg</strong>. Tap{' '}
+          <Plus size={12} className="inline align-[-1px]" /> on any row — or drag it — to build a meal
+          in the calculator and see it against your daily target.
         </p>
       </header>
 
@@ -364,7 +368,7 @@ export function Nutrition() {
                         {item.pricePer100gHKD === undefined ? '—' : `$${item.pricePer100gHKD}`}
                       </td>
                       <ProteinCostCell item={item} />
-                      <td className="whitespace-nowrap text-xs text-muted-foreground">{item.portion}</td>
+                      <td className="whitespace-nowrap text-xs text-muted-foreground">{scalePortion(item, profile.weightKg)}</td>
                       <td className="!text-left text-xs text-muted-foreground">{item.note ?? '—'}</td>
                     </tr>
                   ))}

@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import schemaSql from '../../supabase/schema.sql?raw'
+import migrationSql from '../../supabase/migrations/0001_sync_keys.sql?raw'
 import { customDishesSnapshot, dishLogSnapshot, picksSnapshot, planSnapshot, snapshotsEqual, SYNC_KEYS, workoutLogSnapshot, type PlanSnapshot } from './sync'
 
 const plan: PlanSnapshot = {
@@ -89,5 +91,22 @@ describe('workoutLogSnapshot', () => {
     // Without this, signing in on a device that has history would overwrite it
     // with undefined from an older remote row.
     expect(workoutLogSnapshot({} as never)).toEqual({ sets: [] })
+  })
+})
+
+describe('the Supabase key whitelist', () => {
+  // The constraint lives in SQL, so a new SYNC_KEYS entry does not fail the
+  // build — it fails at write time in production with
+  // "violates check constraint user_state_key_check". This is the only place
+  // the two lists are compared, so it is what keeps them in step.
+  const keysIn = (sql: string) =>
+    sql.match(/check \(key in \(([^)]*)\)\)/)![1].match(/'([^']+)'/g)!.map((k) => k.replace(/'/g, ''))
+
+  it('matches SYNC_KEYS in schema.sql, so a fresh database accepts every store', () => {
+    expect(keysIn(schemaSql).sort()).toEqual([...SYNC_KEYS].sort())
+  })
+
+  it('matches SYNC_KEYS in the latest migration, so an existing database is widened too', () => {
+    expect(keysIn(migrationSql.split('add constraint')[1]).sort()).toEqual([...SYNC_KEYS].sort())
   })
 })

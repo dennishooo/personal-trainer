@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dishLogSnapshot, picksSnapshot, planSnapshot, snapshotsEqual, SYNC_KEYS, type PlanSnapshot } from './sync'
+import { customDishesSnapshot, dishLogSnapshot, picksSnapshot, planSnapshot, snapshotsEqual, SYNC_KEYS, type PlanSnapshot } from './sync'
 
 const plan: PlanSnapshot = {
   profile: {
@@ -64,6 +64,17 @@ describe('dishLogSnapshot', () => {
 
 describe('SYNC_KEYS', () => {
   it('covers every store that persists user data', () => {
-    expect([...SYNC_KEYS]).toEqual(['plan', 'picks', 'dishLog'])
+    expect([...SYNC_KEYS]).toEqual(['plan', 'picks', 'dishLog', 'customDishes'])
+  })
+})
+
+describe('customDishesSnapshot', () => {
+  it('keeps the dishes, dropping store actions', () => {
+    const dishes = [{ id: 'custom-1', name: 'Mine' }]
+    expect(customDishesSnapshot({ dishes, addDish: () => {} } as never)).toEqual({ dishes })
+  })
+
+  it('defaults a row written before custom dishes existed to empty', () => {
+    expect(customDishesSnapshot({} as never)).toEqual({ dishes: [] })
   })
 })

@@ -1,11 +1,13 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import {
+  customDishesSnapshot,
   dishLogSnapshot,
   picksSnapshot,
   planSnapshot,
   snapshotsEqual,
   SYNC_KEYS,
+  type CustomDishesSnapshot,
   type DishLogSnapshot,
   type PicksSnapshot,
   type PlanSnapshot,
@@ -14,6 +16,7 @@ import {
 import { usePlan } from '@/stores/profile'
 import { usePicks } from '@/stores/picks'
 import { useDishLog } from '@/stores/dish-log'
+import { useCustomDishes } from '@/stores/custom-dishes'
 
 /**
  * The side-effectful half of sync: watches auth, pulls the signed-in user's
@@ -45,12 +48,13 @@ let lastPushed: Partial<Record<SyncKey, unknown>> = {}
 const timers: Partial<Record<SyncKey, ReturnType<typeof setTimeout>>> = {}
 let unsubscribes: (() => void)[] = []
 
-type Snapshot = PlanSnapshot | PicksSnapshot | DishLogSnapshot
+type Snapshot = PlanSnapshot | PicksSnapshot | DishLogSnapshot | CustomDishesSnapshot
 
 function takeSnapshot(key: SyncKey): Snapshot {
   if (key === 'plan') return planSnapshot(usePlan.getState())
   if (key === 'picks') return picksSnapshot(usePicks.getState())
-  return dishLogSnapshot(useDishLog.getState())
+  if (key === 'dishLog') return dishLogSnapshot(useDishLog.getState())
+  return customDishesSnapshot(useCustomDishes.getState())
 }
 
 /** Call once at app start. A no-op when Supabase isn't configured. */
@@ -84,6 +88,7 @@ async function connect(userId: string, email: string | null) {
   if (remote.has('plan')) usePlan.setState(remote.get('plan') as PlanSnapshot)
   if (remote.has('picks')) usePicks.setState(remote.get('picks') as PicksSnapshot)
   if (remote.has('dishLog')) useDishLog.setState(remote.get('dishLog') as DishLogSnapshot)
+  if (remote.has('customDishes')) useCustomDishes.setState(remote.get('customDishes') as CustomDishesSnapshot)
   applyingRemote = false
 
   for (const key of SYNC_KEYS) {
@@ -96,6 +101,7 @@ async function connect(userId: string, email: string | null) {
     usePlan.subscribe(() => queuePush(userId, 'plan')),
     usePicks.subscribe(() => queuePush(userId, 'picks')),
     useDishLog.subscribe(() => queuePush(userId, 'dishLog')),
+    useCustomDishes.subscribe(() => queuePush(userId, 'customDishes')),
   ]
   useSync.setState({ status: 'synced' })
 }

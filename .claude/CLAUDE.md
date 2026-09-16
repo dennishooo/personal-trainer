@@ -28,5 +28,7 @@ backend (`src/stores/sync.ts`) adds magic-link auth and per-user cross-device sy
 - Two nutrition datasets, deliberately separate: `src/data/nutrition-reference.ts` is **per 100 g
   raw ingredients** (for cooking and the macro calculator), `src/data/dishes.ts` is **per ordered
   restaurant portion, as served** (for the Eating out page). Don't merge them — the bases differ.
+  `DISHES` is a read-only curated reference; user-added dishes live in the `custom-dishes` store and
+  are merged on read via `allDishes()`. Read the merged list, never `DISHES` directly, in the page.
 - Every store that persists user data must be registered in `SYNC_KEYS` (`src/lib/sync.ts`) and
   wired into `src/stores/sync.ts`, or it won't follow the user across devices.

@@ -19,7 +19,7 @@ doses, and starting loads in the gym.
 | **Today** | Calorie and macro targets, BMI against Asian-Pacific cut-offs, the trend verdict, weight logging and chart |
 | **Week** | Seven days of meals and training, plus a consolidated shopping list |
 | **Meals** | 27 recipes with scaled portions and step-by-step method; ordering guides for eating out |
-| **Eating out** | 71 Hong Kong restaurant dishes across nine cuisines, priced and costed as served — tap to log them against the day's targets, with per-date history, a sodium tally and an ordering tweak per dish |
+| **Eating out** | 71 Hong Kong restaurant dishes across nine cuisines, priced and costed as served — tap to log them against the day's targets, with per-date history, a sodium tally and an ordering tweak per dish. Add your own dishes, or duplicate a built-in and edit the copy |
 | **Training** | 6-day push/pull/legs split (each muscle 2×/week, Sunday rest) — tap a day to see just that session's exercises in order; form breakdowns and movement diagrams |
 | **Supplements** | Evidence-tiered list with HK sourcing and monthly cost, grouped into a daily schedule |
 | **Profile** | Inputs, goal, activity level, and a full breakdown of how each number was derived |
@@ -86,7 +86,7 @@ npm run build
 Without Supabase configured, everything lives in the browser's localStorage —
 no account needed. When Supabase **is** configured, sign-in is required: the
 app shows a sign-in screen until the user authenticates, and every choice
-(profile, weigh-ins, meal picks, eating-out log) is saved to their account. To set it up, back
+(profile, weigh-ins, meal picks, eating-out log, custom dishes) is saved to their account. To set it up, back
 the app with a free [Supabase](https://supabase.com) project:
 
 1. Create a project, then run [`supabase/schema.sql`](supabase/schema.sql) in the

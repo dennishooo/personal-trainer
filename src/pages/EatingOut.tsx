@@ -1,15 +1,20 @@
 import { useMemo, useState } from 'react'
-import { Search, Plus, X, ChevronLeft, ChevronRight, Lightbulb, Trash2 } from 'lucide-react'
+import { Search, Plus, X, ChevronLeft, ChevronRight, Lightbulb, Trash2, Pencil, Copy } from 'lucide-react'
 import { Icon } from '@/components/icons'
 import { usePlan } from '@/stores/profile'
 import { useDishLog } from '@/stores/dish-log'
+import { useCustomDishes } from '@/stores/custom-dishes'
 import { useUi } from '@/stores/ui'
-import { DISHES, DISH_CUISINE_LABELS, type Dish, type DishCuisine, type DishVerdict } from '@/data/dishes'
+import { DISH_CUISINE_LABELS, type Dish, type DishCuisine, type DishVerdict } from '@/data/dishes'
 import {
   entriesForDate, filterDishes, LOG_PORTION_STEPS, proteinDensity, remainingFrom,
   scaleEntry, SODIUM_LIMIT_MG, suggestDishes, todayISO, totalsForDay, VERDICT_LABELS,
 } from '@/lib/dish-log'
+import {
+  allDishes, datesUsingDish, draftFromDish, EMPTY_DRAFT, isCustomDish, type DishDraft,
+} from '@/lib/custom-dish'
 import { adjustedTargets, ageFrom, macroTargets } from '@/lib/nutrition'
+import { DishForm } from '@/components/DishForm'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -49,35 +54,74 @@ function formatDate(iso: string): string {
 export function EatingOut() {
   const { profile, calorieOverride } = usePlan()
   const { entries, viewDate, logDish, setPortions, removeEntry, clearDate, setViewDate } = useDishLog()
+  const { dishes: customDishes, addDish, updateDish, deleteDish } = useCustomDishes()
   const { query, cuisine, verdict } = useUi((s) => s.dishes)
   const setDishes = useUi((s) => s.setDishes)
+
+  // null = closed. An editor keyed by dish id edits it in place; 'new' adds one.
+  const [editor, setEditor] = useState<{ id: string | 'new'; draft: DishDraft } | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null)
+
+  const dishes = useMemo(() => allDishes(customDishes), [customDishes])
 
   const targets = useMemo(
     () => adjustedTargets(macroTargets(profile, ageFrom(profile.birthDate)), calorieOverride),
     [profile, calorieOverride],
   )
 
-  const logged = useMemo(() => entriesForDate(entries, DISHES, viewDate), [entries, viewDate])
+  const logged = useMemo(() => entriesForDate(entries, dishes, viewDate), [entries, dishes, viewDate])
   const totals = useMemo(() => totalsForDay(logged), [logged])
   const left = useMemo(() => remainingFrom(totals, targets), [totals, targets])
 
-  const shown = useMemo(() => filterDishes(DISHES, { query, cuisine, verdict }), [query, cuisine, verdict])
+  const shown = useMemo(() => filterDishes(dishes, { query, cuisine, verdict }), [dishes, query, cuisine, verdict])
   const suggestions = useMemo(
-    () => (logged.length > 0 ? suggestDishes(DISHES, left.kcal) : []),
-    [logged.length, left.kcal],
+    () => (logged.length > 0 ? suggestDishes(dishes, left.kcal) : []),
+    [dishes, logged.length, left.kcal],
   )
 
   const isToday = viewDate === todayISO()
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight">Eating out</h1>
-        <p className="text-sm text-muted-foreground">
-          What a plate actually costs you, as it lands on the table — oil, sauce and sugar included.
-          Tap a dish to add it to the day.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Eating out</h1>
+          <p className="text-sm text-muted-foreground">
+            What a plate actually costs you, as it lands on the table — oil, sauce and sugar included.
+            Tap a dish to add it to the day.
+          </p>
+        </div>
+        <Button
+          className="shrink-0"
+          onClick={() => setEditor({ id: 'new', draft: EMPTY_DRAFT })}
+        >
+          <Plus size={15} /> Add dish
+        </Button>
       </header>
+
+      {editor && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{editor.id === 'new' ? 'Add a dish' : 'Edit dish'}</CardTitle>
+            <CardDescription>
+              Quote one ordered portion as it reaches the table — the oil and sauce included, not
+              the raw ingredients.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DishForm
+              initial={editor.draft}
+              submitLabel={editor.id === 'new' ? 'Add dish' : 'Save changes'}
+              onCancel={() => setEditor(null)}
+              onSubmit={(draft) => {
+                if (editor.id === 'new') addDish(draft)
+                else updateDish(editor.id, draft)
+                setEditor(null)
+              }}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── The day ── */}
       <Card>
@@ -272,7 +316,21 @@ export function EatingOut() {
       {/* ── Dish grid ── */}
       <div className="grid gap-3 md:grid-cols-2">
         {shown.map((d) => (
-          <DishCard key={d.id} dish={d} onLog={() => logDish(d.id)} />
+          <DishCard
+            key={d.id}
+            dish={d}
+            onLog={() => logDish(d.id)}
+            onEdit={isCustomDish(d) ? () => setEditor({ id: d.id, draft: draftFromDish(d) }) : undefined}
+            onDuplicate={() => setEditor({ id: 'new', draft: { ...draftFromDish(d), name: `${d.name} (copy)` } })}
+            onDelete={isCustomDish(d) ? () => setPendingDelete(d.id) : undefined}
+            deleting={pendingDelete === d.id}
+            usedOn={pendingDelete === d.id ? datesUsingDish(entries, d.id) : []}
+            onCancelDelete={() => setPendingDelete(null)}
+            onConfirmDelete={() => {
+              deleteDish(d.id)
+              setPendingDelete(null)
+            }}
+          />
         ))}
       </div>
 
@@ -318,9 +376,22 @@ function DayBar({
   )
 }
 
-function DishCard({ dish, onLog }: { dish: Dish; onLog: () => void }) {
+function DishCard({
+  dish, onLog, onEdit, onDuplicate, onDelete, deleting, usedOn, onCancelDelete, onConfirmDelete,
+}: {
+  dish: Dish
+  onLog: () => void
+  onEdit?: () => void
+  onDuplicate: () => void
+  onDelete?: () => void
+  deleting: boolean
+  usedOn: string[]
+  onCancelDelete: () => void
+  onConfirmDelete: () => void
+}) {
   const [open, setOpen] = useState(false)
   const density = proteinDensity(dish)
+  const mine = isCustomDish(dish)
 
   return (
     <Card className="overflow-hidden">
@@ -336,6 +407,7 @@ function DishCard({ dish, onLog }: { dish: Dish; onLog: () => void }) {
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
               <span className="text-sm font-semibold">{dish.name}</span>
               {dish.chinese && <span className="text-xs text-muted-foreground">{dish.chinese}</span>}
+              {mine && <Badge tone="outline">yours</Badge>}
             </div>
             <div className="mt-0.5 text-xs text-muted-foreground">
               {dish.servingNote}
@@ -361,6 +433,38 @@ function DishCard({ dish, onLog }: { dish: Dish; onLog: () => void }) {
             <Badge tone="destructive">{(dish.sodiumMg / 1000).toFixed(1)} g sodium</Badge>
           )}
         </div>
+
+        <div className="flex flex-wrap items-center gap-3 text-xs">
+          {onEdit && (
+            <button onClick={onEdit} className="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground">
+              <Pencil size={12} /> Edit
+            </button>
+          )}
+          <button onClick={onDuplicate} className="flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground">
+            <Copy size={12} /> Duplicate
+          </button>
+          {onDelete && (
+            <button onClick={onDelete} className="flex items-center gap-1 text-muted-foreground transition-colors hover:text-destructive">
+              <Trash2 size={12} /> Delete
+            </button>
+          )}
+        </div>
+
+        {deleting && (
+          <div className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2">
+            <p className="text-sm leading-relaxed">
+              Delete <strong>{dish.name}</strong>?
+              {usedOn.length > 0 && (
+                <> It is logged on {usedOn.length} {usedOn.length === 1 ? 'day' : 'days'}, and those
+                days will lose it from their totals.</>
+              )}
+            </p>
+            <div className="flex gap-2">
+              <Button variant="destructive" size="sm" onClick={onConfirmDelete}>Delete</Button>
+              <Button variant="outline" size="sm" onClick={onCancelDelete}>Keep</Button>
+            </div>
+          </div>
+        )}
 
         {dish.swap && (
           <>

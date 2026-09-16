@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { picksSnapshot, planSnapshot, snapshotsEqual, type PlanSnapshot } from './sync'
+import { customDishesSnapshot, dishLogSnapshot, picksSnapshot, planSnapshot, snapshotsEqual, SYNC_KEYS, type PlanSnapshot } from './sync'
 
 const plan: PlanSnapshot = {
   profile: {
@@ -48,5 +48,33 @@ describe('snapshotsEqual', () => {
   it('compares structurally, so a no-op edit does not trigger a push', () => {
     expect(snapshotsEqual(planSnapshot(plan), planSnapshot({ ...plan }))).toBe(true)
     expect(snapshotsEqual(plan, { ...plan, calorieOverride: 0 })).toBe(false)
+  })
+})
+
+describe('dishLogSnapshot', () => {
+  it('keeps the entries, dropping store actions and the viewed date', () => {
+    const entries = [{ entryId: 'e1', date: '2026-09-16', dishId: 'ccc-wonton-noodle', portions: 1 }]
+    expect(dishLogSnapshot({ entries, viewDate: '2026-09-16', logDish: () => {} } as never)).toEqual({ entries })
+  })
+
+  it('defaults a row written before the log existed to empty, not undefined', () => {
+    expect(dishLogSnapshot({} as never)).toEqual({ entries: [] })
+  })
+})
+
+describe('SYNC_KEYS', () => {
+  it('covers every store that persists user data', () => {
+    expect([...SYNC_KEYS]).toEqual(['plan', 'picks', 'dishLog', 'customDishes'])
+  })
+})
+
+describe('customDishesSnapshot', () => {
+  it('keeps the dishes, dropping store actions', () => {
+    const dishes = [{ id: 'custom-1', name: 'Mine' }]
+    expect(customDishesSnapshot({ dishes, addDish: () => {} } as never)).toEqual({ dishes })
+  })
+
+  it('defaults a row written before custom dishes existed to empty', () => {
+    expect(customDishesSnapshot({} as never)).toEqual({ dishes: [] })
   })
 })

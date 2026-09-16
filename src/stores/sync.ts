@@ -1,15 +1,22 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import {
+  customDishesSnapshot,
+  dishLogSnapshot,
   picksSnapshot,
   planSnapshot,
   snapshotsEqual,
+  SYNC_KEYS,
+  type CustomDishesSnapshot,
+  type DishLogSnapshot,
   type PicksSnapshot,
   type PlanSnapshot,
   type SyncKey,
 } from '@/lib/sync'
 import { usePlan } from '@/stores/profile'
 import { usePicks } from '@/stores/picks'
+import { useDishLog } from '@/stores/dish-log'
+import { useCustomDishes } from '@/stores/custom-dishes'
 
 /**
  * The side-effectful half of sync: watches auth, pulls the signed-in user's
@@ -41,8 +48,13 @@ let lastPushed: Partial<Record<SyncKey, unknown>> = {}
 const timers: Partial<Record<SyncKey, ReturnType<typeof setTimeout>>> = {}
 let unsubscribes: (() => void)[] = []
 
-function takeSnapshot(key: SyncKey): PlanSnapshot | PicksSnapshot {
-  return key === 'plan' ? planSnapshot(usePlan.getState()) : picksSnapshot(usePicks.getState())
+type Snapshot = PlanSnapshot | PicksSnapshot | DishLogSnapshot | CustomDishesSnapshot
+
+function takeSnapshot(key: SyncKey): Snapshot {
+  if (key === 'plan') return planSnapshot(usePlan.getState())
+  if (key === 'picks') return picksSnapshot(usePicks.getState())
+  if (key === 'dishLog') return dishLogSnapshot(useDishLog.getState())
+  return customDishesSnapshot(useCustomDishes.getState())
 }
 
 /** Call once at app start. A no-op when Supabase isn't configured. */
@@ -75,9 +87,11 @@ async function connect(userId: string, email: string | null) {
   applyingRemote = true
   if (remote.has('plan')) usePlan.setState(remote.get('plan') as PlanSnapshot)
   if (remote.has('picks')) usePicks.setState(remote.get('picks') as PicksSnapshot)
+  if (remote.has('dishLog')) useDishLog.setState(remote.get('dishLog') as DishLogSnapshot)
+  if (remote.has('customDishes')) useCustomDishes.setState(remote.get('customDishes') as CustomDishesSnapshot)
   applyingRemote = false
 
-  for (const key of ['plan', 'picks'] as const) {
+  for (const key of SYNC_KEYS) {
     const snap = takeSnapshot(key)
     lastPushed[key] = remote.get(key)
     if (!remote.has(key)) await push(userId, key, snap)
@@ -86,6 +100,8 @@ async function connect(userId: string, email: string | null) {
   unsubscribes = [
     usePlan.subscribe(() => queuePush(userId, 'plan')),
     usePicks.subscribe(() => queuePush(userId, 'picks')),
+    useDishLog.subscribe(() => queuePush(userId, 'dishLog')),
+    useCustomDishes.subscribe(() => queuePush(userId, 'customDishes')),
   ]
   useSync.setState({ status: 'synced' })
 }
@@ -100,7 +116,7 @@ function queuePush(userId: string, key: SyncKey) {
   }, 800)
 }
 
-async function push(userId: string, key: SyncKey, data: PlanSnapshot | PicksSnapshot) {
+async function push(userId: string, key: SyncKey, data: Snapshot) {
   if (!supabase) return
   const { error } = await supabase
     .from('user_state')

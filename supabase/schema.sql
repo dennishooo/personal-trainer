@@ -1,6 +1,8 @@
 -- Personal Plan sync schema. Run once in the Supabase SQL editor.
 --
--- One JSONB row per user per store ('plan', 'picks') — last write wins.
+-- One JSONB row per user per store — last write wins. The key whitelist below
+-- must list every entry in SYNC_KEYS (src/lib/sync.ts); a key missing here is
+-- rejected at write time by user_state_key_check, not at build time.
 -- Row-level security is the whole access model: users can only touch rows
 -- whose user_id is their own auth id, enforced by the database.
 --
@@ -12,7 +14,7 @@
 
 create table public.user_state (
   user_id    uuid        not null references auth.users (id) on delete cascade,
-  key        text        not null check (key in ('plan', 'picks')),
+  key        text        not null check (key in ('plan', 'picks', 'dishLog', 'customDishes', 'workoutLog')),
   data       jsonb       not null,
   updated_at timestamptz not null default now(),
   primary key (user_id, key)

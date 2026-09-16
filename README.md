@@ -86,11 +86,15 @@ npm run build
 Without Supabase configured, everything lives in the browser's localStorage —
 no account needed. When Supabase **is** configured, sign-in is required: the
 app shows a sign-in screen until the user authenticates, and every choice
-(profile, weigh-ins, meal picks, eating-out log, custom dishes) is saved to their account. To set it up, back
+(profile, weigh-ins, meal picks, eating-out log, custom dishes, workout log) is saved to their account. To set it up, back
 the app with a free [Supabase](https://supabase.com) project:
 
 1. Create a project, then run [`supabase/schema.sql`](supabase/schema.sql) in the
-   SQL editor. It creates one RLS-protected `user_state` table.
+   SQL editor. It creates one RLS-protected `user_state` table. If your database
+   predates a new store, run the files in [`supabase/migrations/`](supabase/migrations)
+   too — the table's `key` column is constrained to a whitelist, so a store missing
+   from it is rejected at write time with `violates check constraint
+   user_state_key_check`.
 2. In Auth → URL Configuration, set the Site URL to the deployed app and add
    `http://localhost:5173` as a redirect URL for dev.
 3. Copy `.env.example` to `.env.local` and fill in the project URL and anon key

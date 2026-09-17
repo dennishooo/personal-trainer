@@ -312,8 +312,9 @@ function TravelPlan({
           <h2 className="text-lg font-bold tracking-tight">The trip</h2>
           <p className="text-sm text-muted-foreground">
             Alternate A and B every 3–4 days — two or three sessions across a 10-day trip is all
-            maintenance takes. <strong className="font-medium text-foreground">Tap a session to see
-            its exercises</strong> and log your sets as usual.
+            maintenance takes. All exercises are listed below;{' '}
+            <strong className="font-medium text-foreground">tap a session to do it in order and log
+            your sets</strong> as usual.
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -346,7 +347,7 @@ function TravelPlan({
         </CardContent>
       </Card>
 
-      {selected && (
+      {selected ? (
         <div className="space-y-3">
           <Card className="border-primary/40 bg-accent/25">
             <CardHeader>
@@ -357,7 +358,7 @@ function TravelPlan({
                   onClick={() => onSelect(null)}
                   className="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/40 hover:bg-accent"
                 >
-                  <X size={13} /> Close
+                  <X size={13} /> Show all exercises
                 </button>
               </div>
               <CardDescription>
@@ -377,6 +378,26 @@ function TravelPlan({
             </div>
           ))}
         </div>
+      ) : (
+        // Mirror the home page: with no session selected, the exercises still
+        // show as a reference library. Logging stays in the session view, where
+        // order and the log-date bar give it context.
+        TRAVEL_WORKOUTS.map((w) => (
+          <div key={w.id} className="space-y-3">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-wrap items-center gap-2">
+                  <CardTitle>{w.title}</CardTitle>
+                  <Badge tone="primary">Full body</Badge>
+                </div>
+                <CardDescription>{w.focus}</CardDescription>
+              </CardHeader>
+            </Card>
+            {travelWorkoutExercises(w).map((ex) => (
+              <ExerciseCard key={ex.id} ex={ex} weightKg={weightKg} goal={goal} />
+            ))}
+          </div>
+        ))
       )}
 
       <Card>

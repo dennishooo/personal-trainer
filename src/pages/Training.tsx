@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { PatternFigure, MuscleMap, patternFor, PATTERN_LABEL } from '@/components/illustrations/ExerciseDiagram'
 import { FormVideo } from '@/components/FormVideo'
 import { SetLogger, DayProgressBadge } from '@/components/SetLogger'
+import { ExerciseRemark } from '@/components/ExerciseRemark'
 import { useWorkoutLog } from '@/stores/workout-log'
 import { shiftISO, todayISO } from '@/lib/workout-log'
 import { cn } from '@/lib/utils'
@@ -707,6 +708,8 @@ function ExerciseCard({
             )}
 
             <p className="mt-2 text-sm text-muted-foreground italic">{ex.cue}</p>
+
+            <ExerciseRemark ex={ex} />
 
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <button

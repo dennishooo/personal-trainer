@@ -35,7 +35,9 @@ backend (`src/stores/sync.ts`) adds magic-link auth and per-user cross-device sy
   reference dataset that could later correct them. Sets are keyed by exercise id and date, so editing
   `src/data/training.ts` never orphans history. Rep ranges are parsed out of the exercise's `reps`
   string, which also carries the unit: `'30–60 sec'` marks a timed hold, so `isTimed()` reads that
-  string rather than a separate field that could drift out of sync with it.
+  string rather than a separate field that could drift out of sync with it. Per-exercise remarks
+  (one free-text note per exercise id, about the movement rather than any session) live in the same
+  store and sync inside the `workoutLog` snapshot.
 - Travel mode (`src/data/travel.ts`) is a separate bodyweight-only plan, not a filter over the home
   library: its exercises live in their own registry so the dumbbell library stays uncluttered, but
   they share the `Exercise` type and id namespace with `src/data/training.ts` (ids must never

@@ -41,6 +41,8 @@ export interface CustomDishesSnapshot {
 
 export interface WorkoutLogSnapshot {
   sets: SetEntry[]
+  /** Per-exercise free-text remarks, keyed by exercise id. */
+  remarks: Record<string, string>
 }
 
 export function planSnapshot(s: PlanSnapshot): PlanSnapshot {
@@ -66,8 +68,9 @@ export function customDishesSnapshot(s: CustomDishesSnapshot): CustomDishesSnaps
 
 export function workoutLogSnapshot(s: WorkoutLogSnapshot): WorkoutLogSnapshot {
   // Same defensive default as the dish log: a row written before the workout
-  // log existed has no sets field, and undefined must not wipe this device.
-  return { sets: s.sets ?? [] }
+  // log existed has no sets field — and one written before remarks existed has
+  // no remarks field — and undefined must not wipe this device.
+  return { sets: s.sets ?? [], remarks: s.remarks ?? {} }
 }
 
 /** Structural equality, to skip pushes that would write identical rows. */

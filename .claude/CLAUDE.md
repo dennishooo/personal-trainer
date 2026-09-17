@@ -36,5 +36,10 @@ backend (`src/stores/sync.ts`) adds magic-link auth and per-user cross-device sy
   `src/data/training.ts` never orphans history. Rep ranges are parsed out of the exercise's `reps`
   string, which also carries the unit: `'30–60 sec'` marks a timed hold, so `isTimed()` reads that
   string rather than a separate field that could drift out of sync with it.
+- Travel mode (`src/data/travel.ts`) is a separate bodyweight-only plan, not a filter over the home
+  library: its exercises live in their own registry so the dumbbell library stays uncluttered, but
+  they share the `Exercise` type and id namespace with `src/data/training.ts` (ids must never
+  collide — logged sets are keyed by exercise id) and reuse the home library's bodyweight moves
+  (plank, lying leg raise) via `travelExercise()`.
 - Every store that persists user data must be registered in `SYNC_KEYS` (`src/lib/sync.ts`) and
   wired into `src/stores/sync.ts`, or it won't follow the user across devices.

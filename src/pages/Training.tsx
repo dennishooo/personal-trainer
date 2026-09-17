@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Timer, Repeat, ChevronDown, AlertTriangle, ArrowUpRight, ArrowUp, Footprints, Moon, X, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
+import { Timer, Repeat, ChevronDown, AlertTriangle, ArrowUpRight, ArrowUp, Footprints, Moon, X, ChevronLeft, ChevronRight, CalendarDays, Plane, Undo2 } from 'lucide-react'
 import { usePlan } from '@/stores/profile'
 import { useUi } from '@/stores/ui'
 import {
@@ -7,12 +7,17 @@ import {
   DUMBBELL_MAX_KG, resolveLoad, adjustedSets, estimatedMinutes, splitDayExercises, runDays,
   type MuscleGroupSection, type SplitDay, type Exercise, type Equipment,
 } from '@/data/training'
+import {
+  TRAVEL_WORKOUTS, TRAVEL_WARMUP, TRAVEL_GUIDELINES, TRAVEL_RETURN_NOTE, travelWorkoutExercises,
+  type TravelWorkout,
+} from '@/data/travel'
 import { GOAL_ADJUSTMENT } from '@/lib/nutrition'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PatternFigure, MuscleMap, patternFor, PATTERN_LABEL } from '@/components/illustrations/ExerciseDiagram'
 import { FormVideo } from '@/components/FormVideo'
 import { SetLogger, DayProgressBadge } from '@/components/SetLogger'
+import { ExerciseRemark } from '@/components/ExerciseRemark'
 import { useWorkoutLog } from '@/stores/workout-log'
 import { shiftISO, todayISO } from '@/lib/workout-log'
 import { cn } from '@/lib/utils'
@@ -27,7 +32,7 @@ const EQUIPMENT_LABEL: Record<Equipment, string> = {
 
 export function Training() {
   const { profile } = usePlan()
-  const { trainingDay, setTrainingDay } = useUi()
+  const { trainingDay, setTrainingDay, travelMode, setTravelMode, travelWorkout, setTravelWorkout } = useUi()
   const { logDate, setLogDate } = useWorkoutLog()
 
   const goalTraining = GOAL_TRAINING[profile.goal]
@@ -40,13 +45,65 @@ export function Training() {
       <header>
         <h1 className="text-2xl font-bold tracking-tight">Training</h1>
         <p className="text-sm text-muted-foreground">
-          Built for dumbbells, a bench and bands — nothing here needs a gym. The week runs a six-day
-          push/pull/legs split, each muscle trained twice; the library below has the form details.
-          Loads are estimated from your {profile.weightKg.toFixed(1)} kg; treat them as a first guess
-          and adjust on feel.
+          {travelMode ? (
+            <>
+              Travel mode — nothing here needs equipment beyond a towel, a door and the hotel bed.
+              Two alternating full-body sessions, one every 3–4 days, hold your muscle until you are
+              home; your logged sets keep counting toward the same history.
+            </>
+          ) : (
+            <>
+              Built for dumbbells, a bench and bands — nothing here needs a gym. The week runs a six-day
+              push/pull/legs split, each muscle trained twice; the library below has the form details.
+              Loads are estimated from your {profile.weightKg.toFixed(1)} kg; treat them as a first guess
+              and adjust on feel.
+            </>
+          )}
         </p>
       </header>
 
+      {/* ── Travel mode switch ── */}
+      <Card className={cn(travelMode && 'border-primary/40 bg-accent/25')}>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-5">
+          <div className="flex items-start gap-3">
+            <Plane size={18} className="mt-0.5 shrink-0 text-primary" />
+            <div>
+              <div className="text-sm font-semibold">
+                {travelMode ? 'Travel mode is on' : 'Travelling without your equipment?'}
+              </div>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {travelMode
+                  ? TRAVEL_RETURN_NOTE
+                  : 'Switch to a bodyweight-only plan for the trip — the home programme comes straight back when you do.'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTravelMode(!travelMode)}
+            className={cn(
+              'flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors',
+              travelMode
+                ? 'border-border bg-card hover:bg-accent'
+                : 'border-primary bg-primary text-primary-foreground hover:opacity-90',
+            )}
+          >
+            {travelMode ? <><Undo2 size={13} /> Back to the home plan</> : <><Plane size={13} /> Switch to travel mode</>}
+          </button>
+        </CardContent>
+      </Card>
+
+      {travelMode ? (
+        <TravelPlan
+          goal={profile.goal}
+          weightKg={profile.weightKg}
+          selectedId={travelWorkout}
+          onSelect={setTravelWorkout}
+          logDate={logDate}
+          setLogDate={setLogDate}
+        />
+      ) : (
+        <>
       {/* ── How the current goal and activity shape the programme ── */}
       <Card className="border-primary/40 bg-accent/25">
         <CardHeader>
@@ -223,9 +280,169 @@ export function Training() {
           ))}
         </CardContent>
       </Card>
+        </>
+      )}
 
       <BackToTop />
     </div>
+  )
+}
+
+/**
+ * The bodyweight plan shown while travel mode is on. Same exercise cards and
+ * set logging as the home programme — only the plan around them changes, so
+ * travel sessions land in the same workout history.
+ */
+function TravelPlan({
+  goal, weightKg, selectedId, onSelect, logDate, setLogDate,
+}: {
+  goal: Parameters<typeof adjustedSets>[1]
+  weightKg: number
+  selectedId: string | null
+  onSelect: (id: string | null) => void
+  logDate: string
+  setLogDate: (date: string) => void
+}) {
+  const selected = TRAVEL_WORKOUTS.find((w) => w.id === selectedId) ?? null
+
+  return (
+    <>
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-lg font-bold tracking-tight">The trip</h2>
+          <p className="text-sm text-muted-foreground">
+            Alternate A and B every 3–4 days — two or three sessions across a 10-day trip is all
+            maintenance takes. <strong className="font-medium text-foreground">Tap a session to see
+            its exercises</strong> and log your sets as usual.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {TRAVEL_WORKOUTS.map((w) => (
+            <TravelWorkoutCard
+              key={w.id}
+              workout={w}
+              goal={goal}
+              selected={selected?.id === w.id}
+              logDate={logDate}
+              onSelect={() => onSelect(selected?.id === w.id ? null : w.id)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Warm-up — 5 minutes, before either session</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ol className="space-y-1.5 text-sm">
+            {TRAVEL_WARMUP.map((w, i) => (
+              <li key={i} className="flex gap-2.5">
+                <span className="text-muted-foreground tabular-nums">{i + 1}.</span>
+                <span>{w}</span>
+              </li>
+            ))}
+          </ol>
+        </CardContent>
+      </Card>
+
+      {selected && (
+        <div className="space-y-3">
+          <Card className="border-primary/40 bg-accent/25">
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <CardTitle>{selected.title}</CardTitle>
+                <button
+                  type="button"
+                  onClick={() => onSelect(null)}
+                  className="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/40 hover:bg-accent"
+                >
+                  <X size={13} /> Close
+                </button>
+              </div>
+              <CardDescription>
+                {selected.focus} · {travelWorkoutExercises(selected).length} exercises in order
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <LogDateBar logDate={logDate} setLogDate={setLogDate} />
+
+          {travelWorkoutExercises(selected).map((ex, i) => (
+            <div key={ex.id} className="relative">
+              <span className="absolute -left-1 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground shadow-sm">
+                {i + 1}
+              </span>
+              <ExerciseCard ex={ex} weightKg={weightKg} goal={goal} logging />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>How to make bodyweight count</CardTitle>
+          <CardDescription>
+            The loads are lighter than your dumbbells, so the intensity has to come from execution.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2">
+          {TRAVEL_GUIDELINES.map((r) => (
+            <div key={r.title} className="rounded-lg border border-border p-3">
+              <div className="text-sm font-semibold">{r.title}</div>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{r.body}</p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </>
+  )
+}
+
+function TravelWorkoutCard({
+  workout, goal, selected, onSelect, logDate,
+}: {
+  workout: TravelWorkout
+  goal: Parameters<typeof adjustedSets>[1]
+  selected: boolean
+  onSelect: () => void
+  logDate: string
+}) {
+  const exercises = travelWorkoutExercises(workout)
+  const totalSets = exercises.reduce((a, e) => a + adjustedSets(e, goal), 0)
+  const minutes = estimatedMinutes(exercises, goal)
+
+  return (
+    <button type="button" onClick={onSelect} aria-pressed={selected} className="h-full w-full text-left">
+      <Card
+        className={cn(
+          'h-full transition-colors hover:border-primary/50',
+          selected && 'border-primary ring-1 ring-primary',
+        )}
+      >
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-sm">{workout.title}</CardTitle>
+            <Badge tone="primary">
+              <Plane size={11} className="mr-1" />
+              Full body
+            </Badge>
+          </div>
+          <CardDescription>
+            {totalSets} sets · ~{minutes} min
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 pt-0">
+          <DayProgressBadge exerciseIds={workout.exerciseIds} date={logDate} targetTotal={totalSets} />
+          <ul className="space-y-1 text-sm">
+            {exercises.map((e) => (
+              <li key={e.id}>{e.name}</li>
+            ))}
+          </ul>
+          {workout.note && <p className="text-xs leading-relaxed text-muted-foreground">{workout.note}</p>}
+        </CardContent>
+      </Card>
+    </button>
   )
 }
 
@@ -491,6 +708,8 @@ function ExerciseCard({
             )}
 
             <p className="mt-2 text-sm text-muted-foreground italic">{ex.cue}</p>
+
+            <ExerciseRemark ex={ex} />
 
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <button

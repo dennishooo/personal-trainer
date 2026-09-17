@@ -82,15 +82,16 @@ describe('customDishesSnapshot', () => {
 })
 
 describe('workoutLogSnapshot', () => {
-  it('keeps only the logged sets, never the store actions', () => {
+  it('keeps the logged sets and exercise remarks, never the store actions', () => {
     const sets = [{ setId: 's1', date: '2026-09-16', exerciseId: 'goblet-squat', weightKg: 24, reps: 12 }]
-    expect(workoutLogSnapshot({ sets, addSet: () => {} } as never)).toEqual({ sets })
+    const remarks = { 'goblet-squat': 'heels on a plate' }
+    expect(workoutLogSnapshot({ sets, remarks, addSet: () => {} } as never)).toEqual({ sets, remarks })
   })
 
-  it('defaults a row written before the workout log existed', () => {
+  it('defaults a row written before the workout log or remarks existed', () => {
     // Without this, signing in on a device that has history would overwrite it
     // with undefined from an older remote row.
-    expect(workoutLogSnapshot({} as never)).toEqual({ sets: [] })
+    expect(workoutLogSnapshot({} as never)).toEqual({ sets: [], remarks: {} })
   })
 })
 

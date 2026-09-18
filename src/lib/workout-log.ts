@@ -123,6 +123,27 @@ export function sessionVolume(session: ExerciseSession, timed = false): number {
   return session.sets.reduce((a, s) => (s.weightKg > 0 ? a + s.weightKg * s.reps : a), 0)
 }
 
+export interface SessionSubtotal {
+  value: number
+  unit: 'kg' | 'reps' | 'sec'
+}
+
+/**
+ * Running total for a session in the unit that actually measures it: load
+ * volume for loaded work, plain reps for bodyweight work, held seconds for
+ * timed holds. This is what the logger shows while you fill in sets, so you
+ * can race last session's total without the three units being pretended into
+ * one number — comparisons are only meaningful when the units match.
+ */
+export function sessionSubtotal(session: ExerciseSession, timed = false): SessionSubtotal {
+  const reps = session.sets.reduce((a, s) => a + s.reps, 0)
+  if (timed) return { value: reps, unit: 'sec' }
+  if (session.sets.some((s) => s.weightKg > 0)) {
+    return { value: sessionVolume(session), unit: 'kg' }
+  }
+  return { value: reps, unit: 'reps' }
+}
+
 /** The heaviest set of a session, ties broken by reps. Null for an empty session. */
 export function topSet(session: ExerciseSession): SetEntry | null {
   return session.sets.reduce<SetEntry | null>((best, s) => {

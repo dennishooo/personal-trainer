@@ -4,8 +4,9 @@ import type { Exercise } from '@/data/training'
 import { useWorkoutLog } from '@/stores/workout-log'
 import {
   describeSession, isTimed, previousSession, progressionAdvice, progressSeries, sessionsFor,
-  setsFor, suggestedWeight,
+  sessionVolume, setsFor, suggestedWeight,
 } from '@/lib/workout-log'
+import { metricsFor, METRICS, type ProgressMetric } from '@/lib/progress-metrics'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -22,6 +23,7 @@ const ExerciseProgressChart = lazy(() =>
 export function SetLogger({ ex, targetSets }: { ex: Exercise; targetSets: number }) {
   const { sets, logDate, addSet, updateSet, removeSet } = useWorkoutLog()
   const [showHistory, setShowHistory] = useState(false)
+  const [metric, setMetric] = useState<ProgressMetric>('est1RM')
 
   const timed = isTimed(ex)
   const today = useMemo(() => setsFor(sets, ex.id, logDate), [sets, ex.id, logDate])
@@ -36,6 +38,11 @@ export function SetLogger({ ex, targetSets }: { ex: Exercise; targetSets: number
   // Bodyweight exercises have no load to plot, and no weight input worth
   // showing until the user actually straps something on.
   const bodyweightOnly = series.length > 0 && series.every((p) => p.topWeightKg === 0)
+  const metricOptions = useMemo(() => metricsFor(bodyweightOnly), [bodyweightOnly])
+  // Bodyweight work offers only 'Best reps', so a default of est. 1RM would
+  // plot a flat zero line until the user picked something. Fall back rather
+  // than trusting the state to match the exercise.
+  const activeMetric = metricOptions.some((m) => m.key === metric) ? metric : metricOptions[0].key
 
   const [weight, setWeight] = useState('')
   const [reps, setReps] = useState('')
@@ -180,12 +187,34 @@ export function SetLogger({ ex, targetSets }: { ex: Exercise; targetSets: number
             <div className="mt-2.5 space-y-3 border-t border-border pt-2.5">
               {series.length >= 2 ? (
                 <div>
-                  <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                    <LineChart size={12} />
-                    {bodyweightOnly ? 'Best reps per session' : 'Estimated 1RM — the trend, not a lift to attempt'}
+                  <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                      <LineChart size={12} />
+                      {METRICS[activeMetric].caption}
+                    </div>
+                    {metricOptions.length > 1 && (
+                      <div className="flex gap-1" role="group" aria-label={`Chart metric for ${ex.name}`}>
+                        {metricOptions.map((m) => (
+                          <button
+                            key={m.key}
+                            type="button"
+                            onClick={() => setMetric(m.key)}
+                            aria-pressed={activeMetric === m.key}
+                            className={cn(
+                              'rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors',
+                              activeMetric === m.key
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-secondary text-muted-foreground hover:text-foreground',
+                            )}
+                          >
+                            {m.tab}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <Suspense fallback={<div className="h-48 w-full animate-pulse rounded-lg bg-secondary" />}>
-                    <ExerciseProgressChart data={series} bodyweight={bodyweightOnly} />
+                    <ExerciseProgressChart data={series} metric={activeMetric} />
                   </Suspense>
                 </div>
               ) : (
@@ -199,12 +228,20 @@ export function SetLogger({ ex, targetSets }: { ex: Exercise; targetSets: number
                   <History size={12} /> Past sessions
                 </div>
                 <ul className="max-h-40 space-y-1 overflow-y-auto text-xs">
-                  {history.map((s) => (
-                    <li key={s.date} className="flex items-center justify-between gap-3">
-                      <span className="text-muted-foreground tabular-nums">{s.date}</span>
-                      <span className="text-right tabular-nums">{describeSession(s, timed)}</span>
-                    </li>
-                  ))}
+                  {history.map((s) => {
+                    const vol = sessionVolume(s, timed)
+                    return (
+                      <li key={s.date} className="flex items-center justify-between gap-3">
+                        <span className="text-muted-foreground tabular-nums">{s.date}</span>
+                        <span className="text-right tabular-nums">
+                          {describeSession(s, timed)}
+                          {vol > 0 && (
+                            <span className="ml-1.5 text-muted-foreground">· {vol.toLocaleString()} kg</span>
+                          )}
+                        </span>
+                      </li>
+                    )
+                  })}
                 </ul>
               </div>
             </div>

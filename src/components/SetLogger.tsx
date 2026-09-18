@@ -4,7 +4,7 @@ import type { Exercise } from '@/data/training'
 import { useWorkoutLog } from '@/stores/workout-log'
 import {
   describeSession, isTimed, previousSession, progressionAdvice, progressSeries, sessionsFor,
-  sessionVolume, setsFor, suggestedWeight,
+  sessionSubtotal, sessionVolume, setsFor, suggestedWeight,
 } from '@/lib/workout-log'
 import { metricsFor, METRICS, type ProgressMetric } from '@/lib/progress-metrics'
 import { Badge } from '@/components/ui/badge'
@@ -33,6 +33,11 @@ export function SetLogger({ ex, targetSets }: { ex: Exercise; targetSets: number
     [today, ex, targetSets, logDate],
   )
   const history = useMemo(() => sessionsFor(sets, ex.id), [sets, ex.id])
+  const todaySub = useMemo(
+    () => sessionSubtotal({ date: logDate, exerciseId: ex.id, sets: today }, timed),
+    [today, ex.id, logDate, timed],
+  )
+  const prevSub = useMemo(() => (previous ? sessionSubtotal(previous, timed) : null), [previous, timed])
   const series = useMemo(() => progressSeries(sets, ex.id), [sets, ex.id])
 
   // Bodyweight exercises have no load to plot, and no weight input worth
@@ -121,6 +126,28 @@ export function SetLogger({ ex, targetSets }: { ex: Exercise; targetSets: number
             </li>
           ))}
         </ul>
+      )}
+
+      {today.length > 0 && todaySub.value > 0 && (
+        <p className="mt-2 text-xs text-muted-foreground tabular-nums">
+          Session total:{' '}
+          <span className="font-medium text-foreground">
+            {todaySub.value.toLocaleString()} {todaySub.unit}
+          </span>
+          {prevSub && prevSub.unit === todaySub.unit && prevSub.value > 0 && (
+            todaySub.value > prevSub.value ? (
+              <span className="text-[var(--success)]">
+                {' '}· up {(todaySub.value - prevSub.value).toLocaleString()} {todaySub.unit} on last time
+              </span>
+            ) : todaySub.value === prevSub.value ? (
+              <span className="text-[var(--success)]"> · matched last time</span>
+            ) : (
+              <span>
+                {' '}· {(prevSub.value - todaySub.value).toLocaleString()} {todaySub.unit} to match last time
+              </span>
+            )
+          )}
+        </p>
       )}
 
       <form onSubmit={submit} className="mt-2.5 flex flex-wrap items-center gap-2">

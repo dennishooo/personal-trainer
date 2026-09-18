@@ -47,6 +47,10 @@ backend (`src/stores/sync.ts`) adds magic-link auth and per-user cross-device sy
   Recharts `<Bar>` needs `isAnimationActive={false}` here: these charts mount behind a `Suspense`
   fallback, so the grow-from-baseline animation lays out against a zero-height container and
   freezes every bar at a 2 px sliver.
+  The set logger's running session total (`sessionSubtotal`) reports each session in its own unit —
+  kg for loaded work, reps for bodyweight, seconds for holds — and the last-time comparison renders
+  only when today's and the previous session's units match; the units are never folded into one
+  number, for the same reason load volume excludes them.
 - Travel mode (`src/data/travel.ts`) is a separate bodyweight-only plan, not a filter over the home
   library: its exercises live in their own registry so the dumbbell library stays uncluttered, but
   they share the `Exercise` type and id namespace with `src/data/training.ts` (ids must never

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   comparePeriods, datesFor, daySummary, describeSession, estimated1RM, isTimed, loggedDates,
   periodSummary, previousSession, progressionAdvice, progressSeries, repRange, sessionBest1RM,
-  sessionsFor, sessionVolume, setsFor, shiftISO, suggestedWeight, todayISO, topSet, volumeSeries,
+  sessionsFor, sessionSubtotal, sessionVolume, setsFor, shiftISO, suggestedWeight, todayISO, topSet,
+  volumeSeries,
   type ExerciseSession, type SetEntry,
 } from '@/lib/workout-log'
 import type { Exercise } from '@/data/training'
@@ -169,6 +170,34 @@ describe('sessionVolume', () => {
   it('is zero for a timed hold, whose reps are seconds and not repetitions', () => {
     // 10 kg x 45 sec is 450 kg-seconds, which must not be added to a kg-reps total.
     expect(sessionVolume(session([set({ weightKg: 10, reps: 45 })]), true)).toBe(0)
+  })
+})
+
+describe('sessionSubtotal', () => {
+  it('totals load volume in kg for loaded work', () => {
+    const s = session([set({ weightKg: 20, reps: 10 }), set({ setId: 'b', weightKg: 20, reps: 8 })])
+    expect(sessionSubtotal(s)).toEqual({ value: 360, unit: 'kg' })
+  })
+
+  it('totals plain reps for bodyweight work, where there is no kg to sum', () => {
+    const s = session([set({ weightKg: 0, reps: 20 }), set({ setId: 'b', weightKg: 0, reps: 15 })])
+    expect(sessionSubtotal(s)).toEqual({ value: 35, unit: 'reps' })
+  })
+
+  it('totals seconds for timed holds, even when a weight was typed in', () => {
+    // Someone logging their bodyweight against a plank must not turn the
+    // subtotal into kg-seconds — timed wins over the weight field.
+    const s = session([set({ weightKg: 79, reps: 50 }), set({ setId: 'b', weightKg: 79, reps: 45 })])
+    expect(sessionSubtotal(s, true)).toEqual({ value: 95, unit: 'sec' })
+  })
+
+  it('counts only the loaded sets of a mixed session, matching sessionVolume', () => {
+    const s = session([set({ weightKg: 20, reps: 10 }), set({ setId: 'b', weightKg: 0, reps: 30 })])
+    expect(sessionSubtotal(s)).toEqual({ value: 200, unit: 'kg' })
+  })
+
+  it('is zero reps for an empty session', () => {
+    expect(sessionSubtotal(session([]))).toEqual({ value: 0, unit: 'reps' })
   })
 })
 

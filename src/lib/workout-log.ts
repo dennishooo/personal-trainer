@@ -109,9 +109,18 @@ export function sessionsFor(sets: SetEntry[], exerciseId: string): ExerciseSessi
   }))
 }
 
-/** Total reps × weight for a session — the crude but honest measure of work done. */
-export function sessionVolume(session: ExerciseSession): number {
-  return session.sets.reduce((a, s) => a + s.weightKg * s.reps, 0)
+/**
+ * Load volume — kg lifted × reps, summed over a session.
+ *
+ * Only loaded, rep-counted sets contribute. A bodyweight set has no kg to
+ * multiply, and a timed hold's "reps" are seconds, so kg × sec would add a
+ * meaningless number to a kg × reps total. Both are therefore skipped rather
+ * than silently folded in, which is why a plank-only session reports 0 and
+ * the UI labels this "load volume" rather than "work done".
+ */
+export function sessionVolume(session: ExerciseSession, timed = false): number {
+  if (timed) return 0
+  return session.sets.reduce((a, s) => (s.weightKg > 0 ? a + s.weightKg * s.reps : a), 0)
 }
 
 /** The heaviest set of a session, ties broken by reps. Null for an empty session. */
@@ -269,13 +278,83 @@ export interface DaySummary {
   volume: number
 }
 
-/** Per-day rollup for the history list. */
+/**
+ * Per-day rollup for the history list. Volume follows the same rule as
+ * sessionVolume — loaded sets only — but a day mixes exercises, so timed
+ * holds are excluded by their zero weight rather than by an explicit flag.
+ * A plank is logged at 0 kg, so it drops out either way.
+ */
 export function daySummary(sets: SetEntry[], date: string): DaySummary {
   const onDate = sets.filter((s) => s.date === date)
   return {
     date,
     exerciseCount: new Set(onDate.map((s) => s.exerciseId)).size,
     setCount: onDate.length,
-    volume: onDate.reduce((a, s) => a + s.weightKg * s.reps, 0),
+    volume: onDate.reduce((a, s) => (s.weightKg > 0 ? a + s.weightKg * s.reps : a), 0),
   }
+}
+
+export interface PeriodSummary {
+  /** Inclusive ISO bounds of the window, oldest first. */
+  from: string
+  to: string
+  /** Distinct days trained — the honest count of sessions, however many exercises each held. */
+  sessionCount: number
+  setCount: number
+  /** Loaded sets only, as everywhere else in this module. */
+  volume: number
+}
+
+/**
+ * Rollup over the `days` ending at `to` inclusive — the week-vs-week view.
+ *
+ * A window rather than a calendar week: comparing "the last 7 days" against
+ * "the 7 before" is meaningful on any day you open the app, whereas a
+ * Monday-anchored week spends most of its life half-finished and always
+ * looks like a decline.
+ */
+export function periodSummary(sets: SetEntry[], to: string, days = 7): PeriodSummary {
+  const from = shiftISO(to, -(days - 1))
+  const within = sets.filter((s) => s.date >= from && s.date <= to)
+  return {
+    from,
+    to,
+    sessionCount: new Set(within.map((s) => s.date)).size,
+    setCount: within.length,
+    volume: within.reduce((a, s) => (s.weightKg > 0 ? a + s.weightKg * s.reps : a), 0),
+  }
+}
+
+export interface PeriodComparison {
+  current: PeriodSummary
+  previous: PeriodSummary
+  /**
+   * Percent change in volume, or null when the previous window had none —
+   * dividing by zero would render "∞%" on the first week of training, and
+   * "no comparison yet" is the truthful thing to show there.
+   */
+  volumeChangePct: number | null
+}
+
+/** The last `days` against the `days` before them, for the weekly summary card. */
+export function comparePeriods(sets: SetEntry[], to: string, days = 7): PeriodComparison {
+  const current = periodSummary(sets, to, days)
+  const previous = periodSummary(sets, shiftISO(to, -days), days)
+  return {
+    current,
+    previous,
+    volumeChangePct:
+      previous.volume > 0
+        ? Math.round(((current.volume - previous.volume) / previous.volume) * 100)
+        : null,
+  }
+}
+
+/**
+ * Daily volume across every exercise for the `days` ending at `to`, oldest
+ * first and including untrained days as zeros — a gap in the x-axis would
+ * make a rest day look like missing data rather than a rest day.
+ */
+export function volumeSeries(sets: SetEntry[], to: string, days = 28): DaySummary[] {
+  return Array.from({ length: days }, (_, i) => daySummary(sets, shiftISO(to, -(days - 1 - i))))
 }

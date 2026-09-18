@@ -38,6 +38,15 @@ backend (`src/stores/sync.ts`) adds magic-link auth and per-user cross-device sy
   string rather than a separate field that could drift out of sync with it. Per-exercise remarks
   (one free-text note per exercise id, about the movement rather than any session) live in the same
   store and sync inside the `workoutLog` snapshot.
+  **Load volume** (`sessionVolume`, `periodSummary`, `daySummary`) counts only loaded, rep-counted
+  sets: a bodyweight set has no kg to multiply, and a timed hold's `reps` are seconds, so kg × sec
+  would pollute a kg × reps total. A plank-only session therefore reports 0 — label it "load
+  volume", never "work done". Chart metric specs live in `src/lib/progress-metrics.ts` rather than
+  in `ExerciseProgressChart.tsx` so `SetLogger` can render the metric toggle without statically
+  importing the chart, which would pull recharts out of its lazy chunk and into the main bundle.
+  Recharts `<Bar>` needs `isAnimationActive={false}` here: these charts mount behind a `Suspense`
+  fallback, so the grow-from-baseline animation lays out against a zero-height container and
+  freezes every bar at a 2 px sliver.
 - Travel mode (`src/data/travel.ts`) is a separate bodyweight-only plan, not a filter over the home
   library: its exercises live in their own registry so the dumbbell library stays uncluttered, but
   they share the `Exercise` type and id namespace with `src/data/training.ts` (ids must never

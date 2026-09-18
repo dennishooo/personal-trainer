@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
-  datesFor, daySummary, describeSession, estimated1RM, isTimed, loggedDates, previousSession,
-  progressionAdvice, progressSeries, repRange, sessionBest1RM, sessionsFor, sessionVolume,
-  setsFor, shiftISO, suggestedWeight, todayISO, topSet,
+  comparePeriods, datesFor, daySummary, describeSession, estimated1RM, isTimed, loggedDates,
+  periodSummary, previousSession, progressionAdvice, progressSeries, repRange, sessionBest1RM,
+  sessionsFor, sessionVolume, setsFor, shiftISO, suggestedWeight, todayISO, topSet, volumeSeries,
   type ExerciseSession, type SetEntry,
 } from '@/lib/workout-log'
 import type { Exercise } from '@/data/training'
@@ -159,6 +159,83 @@ describe('sessionVolume', () => {
 
   it('is zero for bodyweight work', () => {
     expect(sessionVolume(session([set({ weightKg: 0, reps: 20 })]))).toBe(0)
+  })
+
+  it('skips bodyweight sets rather than letting them drag a loaded total down', () => {
+    const mixed = session([set({ weightKg: 20, reps: 10 }), set({ setId: 'b', weightKg: 0, reps: 30 })])
+    expect(sessionVolume(mixed)).toBe(200)
+  })
+
+  it('is zero for a timed hold, whose reps are seconds and not repetitions', () => {
+    // 10 kg x 45 sec is 450 kg-seconds, which must not be added to a kg-reps total.
+    expect(sessionVolume(session([set({ weightKg: 10, reps: 45 })]), true)).toBe(0)
+  })
+})
+
+describe('periodSummary', () => {
+  const week = [
+    set({ setId: 'a', date: '2026-09-16', weightKg: 20, reps: 10 }),
+    set({ setId: 'b', date: '2026-09-16', weightKg: 20, reps: 10 }),
+    set({ setId: 'c', date: '2026-09-14', weightKg: 10, reps: 10 }),
+    // Outside a 7-day window ending 2026-09-16, which starts on the 10th.
+    set({ setId: 'd', date: '2026-09-01', weightKg: 100, reps: 10 }),
+  ]
+
+  it('counts distinct days, not sets, as sessions', () => {
+    const out = periodSummary(week, '2026-09-16')
+    expect(out.sessionCount).toBe(2)
+    expect(out.setCount).toBe(3)
+  })
+
+  it('includes both window bounds and excludes what falls outside', () => {
+    const out = periodSummary(week, '2026-09-16')
+    expect(out.from).toBe('2026-09-10')
+    expect(out.to).toBe('2026-09-16')
+    expect(out.volume).toBe(500)
+  })
+
+  it('excludes bodyweight sets from volume but still counts them as sets', () => {
+    const out = periodSummary([set({ weightKg: 0, reps: 30 })], '2026-09-16')
+    expect(out.setCount).toBe(1)
+    expect(out.volume).toBe(0)
+  })
+})
+
+describe('comparePeriods', () => {
+  it('compares the last seven days against the seven before, without overlap', () => {
+    const out = comparePeriods([
+      set({ setId: 'a', date: '2026-09-16', weightKg: 20, reps: 10 }),
+      set({ setId: 'b', date: '2026-09-08', weightKg: 10, reps: 10 }),
+    ], '2026-09-16')
+    expect(out.current.volume).toBe(200)
+    expect(out.previous.volume).toBe(100)
+    expect(out.previous.to).toBe('2026-09-09')
+    expect(out.volumeChangePct).toBe(100)
+  })
+
+  it('reports no comparison rather than infinity on the first week', () => {
+    const out = comparePeriods([set({ date: '2026-09-16', weightKg: 20, reps: 10 })], '2026-09-16')
+    expect(out.previous.volume).toBe(0)
+    expect(out.volumeChangePct).toBeNull()
+  })
+
+  it('reports a negative change when volume drops', () => {
+    const out = comparePeriods([
+      set({ setId: 'a', date: '2026-09-16', weightKg: 10, reps: 10 }),
+      set({ setId: 'b', date: '2026-09-08', weightKg: 20, reps: 10 }),
+    ], '2026-09-16')
+    expect(out.volumeChangePct).toBe(-50)
+  })
+})
+
+describe('volumeSeries', () => {
+  it('returns one point per day, oldest first, with rest days as zeros', () => {
+    const out = volumeSeries([set({ date: '2026-09-16', weightKg: 20, reps: 10 })], '2026-09-16', 7)
+    expect(out).toHaveLength(7)
+    expect(out[0].date).toBe('2026-09-10')
+    expect(out[6].date).toBe('2026-09-16')
+    expect(out[6].volume).toBe(200)
+    expect(out.slice(0, 6).every((d) => d.volume === 0 && d.setCount === 0)).toBe(true)
   })
 })
 
@@ -357,5 +434,12 @@ describe('loggedDates and daySummary', () => {
     expect(daySummary(sets, '2026-09-10')).toEqual({
       date: '2026-09-10', exerciseCount: 0, setCount: 0, volume: 0,
     })
+  })
+
+  it('counts a bodyweight set without adding it to volume', () => {
+    const out = daySummary([...sets, set({ setId: 'd', date: '2026-09-16', exerciseId: 'plank', weightKg: 0, reps: 60 })], '2026-09-16')
+    expect(out.exerciseCount).toBe(3)
+    expect(out.setCount).toBe(3)
+    expect(out.volume).toBe(440)
   })
 })

@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { PatternFigure, MuscleMap, patternFor, PATTERN_LABEL } from '@/components/illustrations/ExerciseDiagram'
 import { FormVideo } from '@/components/FormVideo'
 import { SetLogger, DayProgressBadge } from '@/components/SetLogger'
+import { TrainingSummary } from '@/components/TrainingSummary'
 import { ExerciseRemark } from '@/components/ExerciseRemark'
 import { useWorkoutLog } from '@/stores/workout-log'
 import { shiftISO, todayISO } from '@/lib/workout-log'
@@ -135,6 +136,9 @@ export function Training() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── What the last week actually looked like ── */}
+      <TrainingSummary />
 
       {/* ── The weekly split ── */}
       <div className="space-y-3">
